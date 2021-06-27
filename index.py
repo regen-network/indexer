@@ -35,8 +35,9 @@ class BasicClient:
         txs_json = []
         for tx in txs:
             tx_bytes = base64.b64decode(tx)
-            tx_hash = base64.b16encode(hashlib.sha256(tx_bytes).digest()).decode('utf8')
-            tx_json = requests.get(self.api + '/cosmos/tx/v1beta1/txs/' + tx_hash).json()
+            tx_hash = hashlib.sha256(tx_bytes).digest()
+            tx_hash_b16 = base64.b16encode(tx_hash).decode('utf8')
+            tx_json = requests.get(self.api + '/cosmos/tx/v1beta1/txs/' + tx_hash_b16).json()
             txs_json.append({"hash": tx_hash, "tx": tx_json})
         return txs_json
 
@@ -44,54 +45,52 @@ class BasicClient:
         return requests.get(self.rpc + '/tx?hash=' + tx_hash).json()
 
 
-def extract_events(tx):
-    logs = tx['tx_response']['logs']
-    events = []
-    for log in logs:
-        events = events + log['events']
-    return events
-
-
-regen_client = BasicClient(os.environ['REGEN_RPC'], os.environ['REGEN_API'])
-
-
-# print(regen_client.get_block(100))
-# txs = regen_client.get_block_txs(regen_client.get_block(100))
-# print(extract_events(txs[0]))
+# def extract_events(tx):
+#     logs = tx['tx_response']['logs']
+#     events = []
+#     for log in logs:
+#         events = events + log['events']
+#     return events
 
 
 def connect_db():
     return psycopg2.connect(**parse_dsn(os.environ['DATABASE']))
 
 
-test_db = connect_db()
-
-
 def index_block(pg_conn, client: BasicClient, height):
     block = client.get_block(height)
-    time = block['result']['block']['header']['time']
+    block_time = block['result']['block']['header']['time']
     cur = pg_conn.cursor()
-    cur.execute("INSERT INTO block (chain_id, height, data, time) VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING",
-                (client.chain_id, height, Json(block), time))
+    cur.execute('INSERT INTO "regen-1".block (height, data, time) VALUES (%s,%s,%s) ON CONFLICT DO NOTHING',
+                (height, Json(block), block_time))
     txs = client.get_block_txs(block)
-    for tx in txs:
-        cur.execute("INSERT INTO tx (hash, chain_id, height, data) VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING",
-                    (tx['hash'], client.chain_id, height, Json(tx['tx']))),
-        events = extract_events(tx['tx'])
-        for evt in events:
-            cur.execute("INSERT INTO tx_event (tx_hash, type) VALUES (%s,%s) ON CONFLICT DO NOTHING",
-                        (tx['hash'], evt['type']))
-            for attr in evt['attributes']:
-                cur.execute("INSERT INTO tx_event_attr (tx_hash, type, key, value) VALUES (%s,%s,%s,%s) ON CONFLICT "
-                            "DO NOTHING",
-                            (tx['hash'], evt['type'], attr['key'], attr['value']))
+    for tx_idx, tx in enumerate(txs):
+        cur.execute(
+            'INSERT INTO "regen-1".tx (block_height, tx_idx, hash, data) VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING',
+            (height, tx_idx, tx['hash'], Json(tx['tx']))),
+        for msg_idx, msg in enumerate(tx['tx']['tx']['body']['messages']):
+            cur.execute('INSERT INTO "regen-1".msg (block_height, tx_idx, msg_idx, data) VALUES (%s,%s,%s,%s) '
+                        "ON CONFLICT DO NOTHING",
+                        (height, tx_idx, msg_idx, Json(msg)))
+            if tx['tx']['tx_response']['code'] == 0:
+                for evt in tx['tx']['tx_response']['logs'][msg_idx]['events']:
+                    cur.execute(
+                        'INSERT INTO "regen-1".msg_event (block_height, tx_idx, msg_idx, type) VALUES (%s,%s,%s,%s) '
+                        "ON CONFLICT DO NOTHING",
+                        (height, tx_idx, msg_idx, evt['type']))
+                    for attr in evt['attributes']:
+                        cur.execute(
+                            'INSERT INTO "regen-1".msg_event_attr (block_height, tx_idx, msg_idx, type, key, value) '
+                            "VALUES (%s,%s,%s,%s,%s,%s) "
+                            "ON CONFLICT DO NOTHING",
+                            (height, tx_idx, msg_idx, evt['type'], attr['key'], attr['value']))
     pg_conn.commit()
     cur.close()
 
 
 def index_blocks(pg_conn, client: BasicClient):
     cur = pg_conn.cursor()
-    cur.execute("SELECT max(height) FROM block WHERE chain_id = %s", (client.chain_id,))
+    cur.execute('SELECT max(height) FROM "regen-1".block')
     res = cur.fetchone()
     cur.close()
     if res == (None,):
@@ -108,4 +107,6 @@ def index_blocks(pg_conn, client: BasicClient):
         next_height = next_height + 1
 
 
-index_blocks(test_db, regen_client)
+the_db = connect_db()
+regen_client = BasicClient(os.environ['REGEN_RPC'], os.environ['REGEN_API'])
+index_blocks(the_db, regen_client)
