@@ -1,8 +1,8 @@
 import base64
 import hashlib
+import logging
 import os
 import time
-
 import requests
 import psycopg2
 from psycopg2.extensions import parse_dsn
@@ -10,6 +10,8 @@ from psycopg2.extras import Json
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 class BasicClient:
@@ -57,40 +59,46 @@ def connect_db():
     return psycopg2.connect(**parse_dsn(os.environ['DATABASE']))
 
 
-def index_block(pg_conn, client: BasicClient, height):
+def index_block(pg_conn, client: BasicClient, chain_num, height):
     block = client.get_block(height)
     block_time = block['result']['block']['header']['time']
     cur = pg_conn.cursor()
-    cur.execute('INSERT INTO "regen-1".block (height, data, time) VALUES (%s,%s,%s) ON CONFLICT DO NOTHING',
-                (height, Json(block), block_time))
+    cur.execute('INSERT INTO block (chain_num, height, data, time) VALUES (%s, %s,%s,%s) ON CONFLICT DO NOTHING',
+                (chain_num, height, Json(block), block_time))
     txs = client.get_block_txs(block)
     for tx_idx, tx in enumerate(txs):
         cur.execute(
-            'INSERT INTO "regen-1".tx (block_height, tx_idx, hash, data) VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING',
-            (height, tx_idx, tx['hash'], Json(tx['tx']))),
+            'INSERT INTO tx (chain_num, block_height, tx_idx, hash, data) VALUES (%s, %s,%s,%s,%s) ON CONFLICT DO NOTHING',
+            (chain_num, height, tx_idx, tx['hash'], Json(tx['tx']))),
         for msg_idx, msg in enumerate(tx['tx']['tx']['body']['messages']):
-            cur.execute('INSERT INTO "regen-1".msg (block_height, tx_idx, msg_idx, data) VALUES (%s,%s,%s,%s) '
+            cur.execute('INSERT INTO msg (chain_num, block_height, tx_idx, msg_idx, data) VALUES (%s,%s,%s,%s,%s) '
                         "ON CONFLICT DO NOTHING",
-                        (height, tx_idx, msg_idx, Json(msg)))
+                        (chain_num, height, tx_idx, msg_idx, Json(msg)))
             if tx['tx']['tx_response']['code'] == 0:
                 for evt in tx['tx']['tx_response']['logs'][msg_idx]['events']:
                     cur.execute(
-                        'INSERT INTO "regen-1".msg_event (block_height, tx_idx, msg_idx, type) VALUES (%s,%s,%s,%s) '
+                        'INSERT INTO msg_event (chain_num, block_height, tx_idx, msg_idx, type) VALUES (%s, %s,%s,%s,%s) '
                         "ON CONFLICT DO NOTHING",
-                        (height, tx_idx, msg_idx, evt['type']))
+                        (chain_num, height, tx_idx, msg_idx, evt['type']))
                     for attr in evt['attributes']:
                         cur.execute(
-                            'INSERT INTO "regen-1".msg_event_attr (block_height, tx_idx, msg_idx, type, key, value) '
-                            "VALUES (%s,%s,%s,%s,%s,%s) "
+                            'INSERT INTO msg_event_attr (chain_num, block_height, tx_idx, msg_idx, type, key, value) '
+                            "VALUES (%s, %s,%s,%s,%s,%s,%s) "
                             "ON CONFLICT DO NOTHING",
-                            (height, tx_idx, msg_idx, evt['type'], attr['key'], attr['value']))
+                            (chain_num, height, tx_idx, msg_idx, evt['type'], attr['key'], attr['value']))
     pg_conn.commit()
     cur.close()
 
 
 def index_blocks(pg_conn, client: BasicClient):
     cur = pg_conn.cursor()
-    cur.execute('SELECT max(height) FROM "regen-1".block')
+    cur.execute('SELECT num FROM chain WHERE chain_id = %s', (client.chain_id,))
+    res = cur.fetchone()
+    if res is None:
+        cur.execute('INSERT INTO chain (chain_id) VALUES (%s) RETURNING num', (client.chain_id,))
+        res = cur.fetchone()
+    chain_num = res[0]
+    cur.execute('SELECT max(height) FROM block WHERE chain_num = %s', (chain_num,))
     res = cur.fetchone()
     cur.close()
     if res == (None,):
@@ -102,8 +110,8 @@ def index_blocks(pg_conn, client: BasicClient):
         while latest_height < next_height:
             time.sleep(1)
             latest_height = client.latest_block_height()
-        print('indexing ' + client.chain_id + ' block ' + str(next_height))
-        index_block(pg_conn, client, next_height)
+        logging.info('indexing ' + client.chain_id + ' block ' + str(next_height))
+        index_block(pg_conn, client, chain_num, next_height)
         next_height = next_height + 1
 
 

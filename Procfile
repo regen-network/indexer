@@ -1,0 +1,1 @@
+index-regen: python index.py

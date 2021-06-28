@@ -1,51 +1,62 @@
-CREATE SCHEMA "regen-1";
-
-CREATE TABLE "regen-1".block
+CREATE TABLE chain
 (
-    height BIGINT primary key,
-    data   jsonb,
-    time   timestamptz
+    num      smallserial primary key,
+    chain_id text not null unique
 );
 
-CREATE TABLE "regen-1".tx
+CREATE TABLE block
 (
-    block_height bigint references "regen-1".block,
-    tx_idx       smallint,
-    hash         bytea unique,
-    data         jsonb,
-    primary key (block_height, tx_idx)
+    chain_num smallint    not null references chain,
+    height    BIGINT      not null,
+    data      jsonb       not null,
+    time      timestamptz not null,
+    primary key (chain_num, height)
 );
 
-CREATE TABLE "regen-1".msg
+CREATE TABLE tx
 (
-    block_height bigint,
-    tx_idx       smallint,
-    msg_idx      smallint,
-    data         jsonb,
-    primary key (block_height, tx_idx, msg_idx),
-    foreign key (block_height, tx_idx) references "regen-1".tx (block_height, tx_idx)
+    chain_num    smallint     not null,
+    block_height bigint       not null,
+    tx_idx       smallint     not null,
+    hash         bytea unique not null,
+    data         jsonb        not null,
+    primary key (chain_num, block_height, tx_idx),
+    foreign key (chain_num, block_height) references block
 );
 
-CREATE INDEX ON "regen-1".msg USING GIN ((data -> '@type'));
-
-CREATE TABLE "regen-1".msg_event
+CREATE TABLE msg
 (
-    block_height bigint,
-    tx_idx       smallint,
-    msg_idx      smallint,
-    type         TEXT,
-    primary key (block_height, tx_idx, msg_idx, type),
-    foreign key (block_height, tx_idx, msg_idx) references "regen-1".msg (block_height, tx_idx, msg_idx)
+    chain_num    smallint not null,
+    block_height bigint   not null,
+    tx_idx       smallint not null,
+    msg_idx      smallint not null,
+    data         jsonb    not null,
+    primary key (chain_num, block_height, tx_idx, msg_idx),
+    foreign key (chain_num, block_height, tx_idx) references tx
 );
 
-CREATE TABLE "regen-1".msg_event_attr
+CREATE INDEX ON msg USING GIN ((data -> '@type'));
+
+CREATE TABLE msg_event
 (
-    block_height bigint,
-    tx_idx       smallint,
-    msg_idx      smallint,
-    type         TEXT,
-    key          text,
-    value        text,
-    primary key (block_height, tx_idx, msg_idx, type, key, value),
-    foreign key (block_height, tx_idx, msg_idx) references "regen-1".msg (block_height, tx_idx, msg_idx)
+    chain_num    smallint not null,
+    block_height bigint   not null,
+    tx_idx       smallint not null,
+    msg_idx      smallint not null,
+    type         TEXT     not null,
+    primary key (chain_num, block_height, tx_idx, msg_idx, type),
+    foreign key (chain_num, block_height, tx_idx, msg_idx) references msg
+);
+
+CREATE TABLE msg_event_attr
+(
+    chain_num    smallint not null,
+    block_height bigint   not null,
+    tx_idx       smallint not null,
+    msg_idx      smallint not null,
+    type         TEXT     not null,
+    key          text     not null,
+    value        text     not null,
+    primary key (chain_num, block_height, tx_idx, msg_idx, type, key, value),
+    foreign key (chain_num, block_height, tx_idx, msg_idx) references msg
 );
