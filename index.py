@@ -47,18 +47,6 @@ class BasicClient:
         return requests.get(self.rpc + '/tx?hash=' + tx_hash).json()
 
 
-# def extract_events(tx):
-#     logs = tx['tx_response']['logs']
-#     events = []
-#     for log in logs:
-#         events = events + log['events']
-#     return events
-
-
-def connect_db():
-    return psycopg2.connect(**parse_dsn(os.environ['DATABASE']))
-
-
 def index_block(pg_conn, client: BasicClient, chain_num, height):
     block = client.get_block(height)
     block_time = block['result']['block']['header']['time']
@@ -115,6 +103,6 @@ def index_blocks(pg_conn, client: BasicClient):
         next_height = next_height + 1
 
 
-the_db = connect_db()
+the_db = psycopg2.connect(**parse_dsn(os.environ['DATABASE_URL']))
 regen_client = BasicClient(os.environ['REGEN_RPC'], os.environ['REGEN_API'])
 index_blocks(the_db, regen_client)
