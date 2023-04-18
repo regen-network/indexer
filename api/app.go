@@ -45,6 +45,8 @@ func (a *App) Get(path string, f func(w http.ResponseWriter, r *http.Request)) {
 
 func (a *App) initRouters() {
 	a.Get("/chain/{chain_id}", a.handleRequest(handlers.GetChain))
+	a.Get("/chain/{chain_id}/msgs", a.handleRequest(handlers.GetChainMsgs))
+	a.Get("/chain/{chain_id}/msgs/{type_url}", a.handleRequest(handlers.GetChainMsgsByType))
 }
 
 type RequestHandlerFunction func(db db.Reader, w http.ResponseWriter, r *http.Request)

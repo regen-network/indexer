@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 )
 
 const getChain = `-- name: GetChain :one
@@ -18,4 +19,75 @@ func (q *Queries) GetChain(ctx context.Context, chainID string) (Chain, error) {
 	var i Chain
 	err := row.Scan(&i.Num, &i.ChainID)
 	return i, err
+}
+
+const getChainMsgs = `-- name: GetChainMsgs :many
+SELECT chain_num, block_height, tx_idx, msg_idx, data FROM msg WHERE chain_num=$1 ORDER BY block_height
+`
+
+func (q *Queries) GetChainMsgs(ctx context.Context, chainNum int16) ([]Msg, error) {
+	rows, err := q.db.QueryContext(ctx, getChainMsgs, chainNum)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Msg
+	for rows.Next() {
+		var i Msg
+		if err := rows.Scan(
+			&i.ChainNum,
+			&i.BlockHeight,
+			&i.TxIdx,
+			&i.MsgIdx,
+			&i.Data,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getChainMsgsByType = `-- name: GetChainMsgsByType :many
+SELECT chain_num, block_height, tx_idx, msg_idx, data FROM msg WHERE chain_num=$1 AND data->>'@type'=$2 ORDER BY block_height
+`
+
+type GetChainMsgsByTypeParams struct {
+	ChainNum int16
+	Data     json.RawMessage
+}
+
+func (q *Queries) GetChainMsgsByType(ctx context.Context, arg GetChainMsgsByTypeParams) ([]Msg, error) {
+	rows, err := q.db.QueryContext(ctx, getChainMsgsByType, arg.ChainNum, arg.Data)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Msg
+	for rows.Next() {
+		var i Msg
+		if err := rows.Scan(
+			&i.ChainNum,
+			&i.BlockHeight,
+			&i.TxIdx,
+			&i.MsgIdx,
+			&i.Data,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
