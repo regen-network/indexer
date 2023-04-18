@@ -21,6 +21,77 @@ func (q *Queries) GetChain(ctx context.Context, chainID string) (Chain, error) {
 	return i, err
 }
 
+const getChainMsgEvents = `-- name: GetChainMsgEvents :many
+SELECT chain_num, block_height, tx_idx, msg_idx, type FROM msg_event WHERE chain_num=$1 ORDER BY block_height,tx_idx,msg_idx
+`
+
+func (q *Queries) GetChainMsgEvents(ctx context.Context, chainNum int16) ([]MsgEvent, error) {
+	rows, err := q.db.QueryContext(ctx, getChainMsgEvents, chainNum)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MsgEvent
+	for rows.Next() {
+		var i MsgEvent
+		if err := rows.Scan(
+			&i.ChainNum,
+			&i.BlockHeight,
+			&i.TxIdx,
+			&i.MsgIdx,
+			&i.Type,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getChainMsgEventsByType = `-- name: GetChainMsgEventsByType :many
+SELECT chain_num, block_height, tx_idx, msg_idx, type FROM msg_event WHERE chain_num=$1 AND type=$2 ORDER BY block_height,tx_idx,msg_idx
+`
+
+type GetChainMsgEventsByTypeParams struct {
+	ChainNum int16
+	Type     string
+}
+
+func (q *Queries) GetChainMsgEventsByType(ctx context.Context, arg GetChainMsgEventsByTypeParams) ([]MsgEvent, error) {
+	rows, err := q.db.QueryContext(ctx, getChainMsgEventsByType, arg.ChainNum, arg.Type)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MsgEvent
+	for rows.Next() {
+		var i MsgEvent
+		if err := rows.Scan(
+			&i.ChainNum,
+			&i.BlockHeight,
+			&i.TxIdx,
+			&i.MsgIdx,
+			&i.Type,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getChainMsgs = `-- name: GetChainMsgs :many
 SELECT chain_num, block_height, tx_idx, msg_idx, data FROM msg WHERE chain_num=$1 ORDER BY block_height,tx_idx,msg_idx
 `

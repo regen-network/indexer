@@ -47,6 +47,8 @@ func (a *App) initRouters() {
 	a.Get("/chain/{chain_id}", a.handleRequest(handlers.GetChain))
 	a.Get("/chain/{chain_id}/msgs", a.handleRequest(handlers.GetChainMsgs))
 	a.Get("/chain/{chain_id}/msgs/{type_url}", a.handleRequest(handlers.GetChainMsgsByType))
+	a.Get("/chain/{chain_id}/events", a.handleRequest(handlers.GetChainEvents))
+	a.Get("/chain/{chain_id}/events/{type_url}", a.handleRequest(handlers.GetChainEventsByType))
 }
 
 type RequestHandlerFunction func(db db.Reader, w http.ResponseWriter, r *http.Request)

@@ -65,3 +65,42 @@ func GetChainMsgsByType(reader db.Reader, w http.ResponseWriter, r *http.Request
 
 	respondJSON(w, http.StatusOK, model.NewMsgsResponse(msgs))
 }
+
+func GetChainEvents(reader db.Reader, w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	chainId := vars["chain_id"]
+
+	msgs, err := reader.GetChainEvents(r.Context(), chainId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondError(
+				w,
+				http.StatusNotFound,
+				fmt.Sprintf("events with chain number %s not found", chainId),
+			)
+			return
+		}
+	}
+
+	respondJSON(w, http.StatusOK, model.NewEventsResponse(msgs))
+}
+
+func GetChainEventsByType(reader db.Reader, w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	chainId := vars["chain_id"]
+	typeUrl := vars["type_url"]
+
+	msgs, err := reader.GetChainEventsByType(r.Context(), chainId, typeUrl)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondError(
+				w,
+				http.StatusNotFound,
+				fmt.Sprintf("events with chain number %s and type %s not found", chainId, typeUrl),
+			)
+			return
+		}
+	}
+
+	respondJSON(w, http.StatusOK, model.NewEventsResponse(msgs))
+}
