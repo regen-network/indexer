@@ -70,7 +70,9 @@ func GetChainEvents(reader db.Reader, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	chainId := vars["chain_id"]
 
-	msgs, err := reader.GetChainEvents(r.Context(), chainId)
+	events := make([]model.Event, 0)
+
+	es, err := reader.GetChainEvents(r.Context(), chainId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			respondError(
@@ -82,7 +84,25 @@ func GetChainEvents(reader db.Reader, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	respondJSON(w, http.StatusOK, model.NewEventsResponse(msgs))
+	for _, e := range es {
+		eas, err := reader.GetChainEventAttrs(r.Context(), e)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				respondError(
+					w,
+					http.StatusNotFound,
+					fmt.Sprintf("event attributes with event %s not found", e.Type),
+				)
+				return
+			}
+		}
+		events = append(events, model.Event{
+			Event:      e,
+			EventAttrs: eas,
+		})
+	}
+
+	respondJSON(w, http.StatusOK, model.NewEventsResponse(events))
 }
 
 func GetChainEventsByType(reader db.Reader, w http.ResponseWriter, r *http.Request) {
@@ -90,7 +110,9 @@ func GetChainEventsByType(reader db.Reader, w http.ResponseWriter, r *http.Reque
 	chainId := vars["chain_id"]
 	typeUrl := vars["type_url"]
 
-	msgs, err := reader.GetChainEventsByType(r.Context(), chainId, typeUrl)
+	events := make([]model.Event, 0)
+
+	es, err := reader.GetChainEventsByType(r.Context(), chainId, typeUrl)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			respondError(
@@ -102,5 +124,23 @@ func GetChainEventsByType(reader db.Reader, w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	respondJSON(w, http.StatusOK, model.NewEventsResponse(msgs))
+	for _, e := range es {
+		eas, err := reader.GetChainEventAttrs(r.Context(), e)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				respondError(
+					w,
+					http.StatusNotFound,
+					fmt.Sprintf("event attributes with event %s not found", e.Type),
+				)
+				return
+			}
+		}
+		events = append(events, model.Event{
+			Event:      e,
+			EventAttrs: eas,
+		})
+	}
+
+	respondJSON(w, http.StatusOK, model.NewEventsResponse(events))
 }

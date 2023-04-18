@@ -21,6 +21,54 @@ func (q *Queries) GetChain(ctx context.Context, chainID string) (Chain, error) {
 	return i, err
 }
 
+const getChainMsgEventAttrs = `-- name: GetChainMsgEventAttrs :many
+SELECT chain_num, block_height, tx_idx, msg_idx, type, key, value, value_hash FROM msg_event_attr WHERE chain_num=$1 AND block_height=$2 AND tx_idx=$3 AND msg_idx=$4
+`
+
+type GetChainMsgEventAttrsParams struct {
+	ChainNum    int16
+	BlockHeight int64
+	TxIdx       int16
+	MsgIdx      int16
+}
+
+func (q *Queries) GetChainMsgEventAttrs(ctx context.Context, arg GetChainMsgEventAttrsParams) ([]MsgEventAttr, error) {
+	rows, err := q.db.QueryContext(ctx, getChainMsgEventAttrs,
+		arg.ChainNum,
+		arg.BlockHeight,
+		arg.TxIdx,
+		arg.MsgIdx,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MsgEventAttr
+	for rows.Next() {
+		var i MsgEventAttr
+		if err := rows.Scan(
+			&i.ChainNum,
+			&i.BlockHeight,
+			&i.TxIdx,
+			&i.MsgIdx,
+			&i.Type,
+			&i.Key,
+			&i.Value,
+			&i.ValueHash,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getChainMsgEvents = `-- name: GetChainMsgEvents :many
 SELECT chain_num, block_height, tx_idx, msg_idx, type FROM msg_event WHERE chain_num=$1 ORDER BY block_height,tx_idx,msg_idx
 `

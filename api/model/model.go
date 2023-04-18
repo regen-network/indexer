@@ -23,12 +23,18 @@ type MsgsResponse struct {
 	Msgs []MsgResponse `json:"msgs"`
 }
 
+type Event struct {
+	Event      db.MsgEvent       `json:"event"`
+	EventAttrs []db.MsgEventAttr `json:"event_attrs"`
+}
+
 type EventResponse struct {
-	ChainNum    int16  `json:"chain_num"`
-	BlockHeight int64  `json:"block_height"`
-	TxIdx       int16  `json:"tx_idx"`
-	MsgIdx      int16  `json:"msg_idx"`
-	Type        string `json:"type"`
+	ChainNum    int16             `json:"chain_num"`
+	BlockHeight int64             `json:"block_height"`
+	TxIdx       int16             `json:"tx_idx"`
+	MsgIdx      int16             `json:"msg_idx"`
+	Type        string            `json:"type"`
+	Attrs       []db.MsgEventAttr `json:"attrs"`
 }
 
 type EventsResponse struct {
@@ -60,20 +66,21 @@ func NewMsgsResponse(msgs []db.Msg) MsgsResponse {
 	return MsgsResponse{Msgs: ms}
 }
 
-func NewEventResponse(event db.MsgEvent) EventResponse {
+func NewEventResponse(event db.MsgEvent, eventAttrs []db.MsgEventAttr) EventResponse {
 	return EventResponse{
 		ChainNum:    event.ChainNum,
 		BlockHeight: event.BlockHeight,
 		TxIdx:       event.TxIdx,
 		MsgIdx:      event.MsgIdx,
 		Type:        event.Type,
+		Attrs:       eventAttrs,
 	}
 }
 
-func NewEventsResponse(events []db.MsgEvent) EventsResponse {
-	mes := make([]EventResponse, 0)
+func NewEventsResponse(events []Event) EventsResponse {
+	es := make([]EventResponse, 0)
 	for _, event := range events {
-		mes = append(mes, NewEventResponse(event))
+		es = append(es, NewEventResponse(event.Event, event.EventAttrs))
 	}
-	return EventsResponse{Events: mes}
+	return EventsResponse{Events: es}
 }

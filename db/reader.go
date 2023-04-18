@@ -23,6 +23,9 @@ type Reader interface {
 
 	// GetChainEventsByType gets events by chain id.
 	GetChainEventsByType(ctx context.Context, chainId string, typeUrl string) ([]MsgEvent, error)
+
+	// GetChainEventAttrs gets event attributes by event.
+	GetChainEventAttrs(ctx context.Context, event MsgEvent) ([]MsgEventAttr, error)
 }
 
 var _ Reader = &dbImpl{}
@@ -66,5 +69,14 @@ func (db *dbImpl) GetChainEventsByType(ctx context.Context, chainId string, type
 	return db.queries.GetChainMsgEventsByType(ctx, GetChainMsgEventsByTypeParams{
 		ChainNum: chain.Num,
 		Type:     typeUrl,
+	})
+}
+
+func (db *dbImpl) GetChainEventAttrs(ctx context.Context, event MsgEvent) ([]MsgEventAttr, error) {
+	return db.queries.GetChainMsgEventAttrs(ctx, GetChainMsgEventAttrsParams{
+		ChainNum:    event.ChainNum,
+		BlockHeight: event.BlockHeight,
+		TxIdx:       event.TxIdx,
+		MsgIdx:      event.MsgIdx,
 	})
 }

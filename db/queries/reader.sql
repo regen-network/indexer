@@ -12,3 +12,6 @@ SELECT * FROM msg_event WHERE chain_num=$1 ORDER BY block_height,tx_idx,msg_idx;
 
 -- name: GetChainMsgEventsByType :many
 SELECT * FROM msg_event WHERE chain_num=$1 AND type=$2 ORDER BY block_height,tx_idx,msg_idx;
+
+-- name: GetChainMsgEventAttrs :many
+SELECT * FROM msg_event_attr WHERE chain_num=$1 AND block_height=$2 AND tx_idx=$3 AND msg_idx=$4;
