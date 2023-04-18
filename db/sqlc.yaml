@@ -1,0 +1,9 @@
+version: 1
+packages:
+  - path: "."
+    name: "db"
+    engine: "postgresql"
+    schema: "../sql"
+    queries: "queries"
+    output_db_file_name: "db.sql.go"
+    output_models_file_name: "models.sql.go"
