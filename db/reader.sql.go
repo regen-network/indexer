@@ -22,7 +22,7 @@ func (q *Queries) GetChain(ctx context.Context, chainID string) (Chain, error) {
 }
 
 const getChainMsgs = `-- name: GetChainMsgs :many
-SELECT chain_num, block_height, tx_idx, msg_idx, data FROM msg WHERE chain_num=$1 ORDER BY block_height
+SELECT chain_num, block_height, tx_idx, msg_idx, data FROM msg WHERE chain_num=$1 ORDER BY block_height,tx_idx,msg_idx
 `
 
 func (q *Queries) GetChainMsgs(ctx context.Context, chainNum int16) ([]Msg, error) {
@@ -55,7 +55,7 @@ func (q *Queries) GetChainMsgs(ctx context.Context, chainNum int16) ([]Msg, erro
 }
 
 const getChainMsgsByType = `-- name: GetChainMsgsByType :many
-SELECT chain_num, block_height, tx_idx, msg_idx, data FROM msg WHERE chain_num=$1 AND data->>'@type'=$2 ORDER BY block_height
+SELECT chain_num, block_height, tx_idx, msg_idx, data FROM msg WHERE chain_num=$1 AND data->>'@type'=$2 ORDER BY block_height,tx_idx,msg_idx
 `
 
 type GetChainMsgsByTypeParams struct {
