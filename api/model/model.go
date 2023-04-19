@@ -85,7 +85,6 @@ func NewEventsResponse(events []Event) EventsResponse {
 	return EventsResponse{Events: es}
 }
 
-// NOTE: The following endpoint is for demonstration purposes
 type Proposal struct {
 	ExecutorResult     string           `json:"executor_result"`
 	FinalTallyResult   FinalTallyResult `json:"final_tally_result"`
@@ -101,7 +100,6 @@ type Proposal struct {
 	VotingPeriodEnd    string           `json:"voting_period_end"`
 }
 
-// NOTE: The following endpoint is for demonstration purposes
 type FinalTallyResult struct {
 	AbstainCount    string `json:"abstain_count"`
 	NoCount         string `json:"no_count"`
@@ -109,7 +107,6 @@ type FinalTallyResult struct {
 	YesCount        string `json:"yes_count"`
 }
 
-// NOTE: The following endpoint is for demonstration purposes
 func NewProposalsResponse(proposals []Proposal) []Proposal {
 	return proposals
 }

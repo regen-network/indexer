@@ -147,7 +147,6 @@ func GetChainEventsByType(reader db.Reader, w http.ResponseWriter, r *http.Reque
 	respondJSON(w, http.StatusOK, model.NewEventsResponse(events))
 }
 
-// NOTE: The following endpoint is for demonstration purposes
 func GetProposalsByGroupPolicy(reader db.Reader, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	chainId := vars["chain_id"]
@@ -291,7 +290,7 @@ func GetProposalsByGroupPolicy(reader db.Reader, w http.ResponseWriter, r *http.
 			GroupPolicyAddress: address,
 			GroupPolicyVersion: "TODO",
 			GroupVersion:       "TODO",
-			Id:                 "TODO",
+			Id:                 proposalId,
 			Messages:           submitMsgData.Messages,
 			Metadata:           submitMsgData.Metadata,
 			Proposers:          submitMsgData.Proposers,
