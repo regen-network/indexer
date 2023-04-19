@@ -25,15 +25,21 @@ RUN sed -i "s/stake/uregen/g" /root/.regen/config/genesis.json
 
 # Add accounts
 RUN printf "trouble alarm laptop turn call stem lend brown play planet grocery survey smooth seed describe hood praise whale smile repeat dry sauce front future\n\n" | regen keys --keyring-backend test add validator -i
-RUN printf "firm royal equal cousin just kind token control enroll liar night kitchen actor reward ramp apology family clump install margin mail shiver explain clump\n\n" | regen keys --keyring-backend test add regen1 -i
+RUN printf "cool trust waste core unusual report duck amazing fault juice wish century across ghost cigar diary correct draw glimpse face crush rapid quit equip\n\n" | regen keys --keyring-backend test add user -i
 
 # Set up validator
 RUN regen add-genesis-account validator 1000000000uregen --keyring-backend test
 RUN regen gentx validator 1000000uregen
 
 # Set up test acount
-RUN regen add-genesis-account regen1 1000000000uregen --keyring-backend test
+RUN regen add-genesis-account user 1000000000uregen --keyring-backend test
 RUN regen collect-gentxs
 
 # Set minimum gas price
-RUN sed -i "s/minimum-gas-prices = \"\"/minimum-gas-prices = \"0uregen\"/g" /root/.regen/config/app.toml
+RUN sed -i "s/minimum-gas-prices = \"\"/minimum-gas-prices = \"0uregen\"/" /root/.regen/config/app.toml
+
+# Set pruning to everything
+RUN sed -i "s/pruning = \"default\"/pruning = \"everything\"/" /root/.regen/config/app.toml
+
+# Set cors allow all origins
+RUN sed -i "s/cors_allowed_origins = \[\]/cors_allowed_origins = [\"*\"]/" /root/.regen/config/config.toml

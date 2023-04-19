@@ -38,7 +38,7 @@ type EventResponse struct {
 }
 
 type EventsResponse struct {
-	Events []EventResponse `json:"_msg_events"`
+	Events []EventResponse `json:"msg_events"`
 }
 
 func NewChainResponse(chain db.Chain) ChainResponse {
@@ -83,4 +83,33 @@ func NewEventsResponse(events []Event) EventsResponse {
 		es = append(es, NewEventResponse(event.Event, event.EventAttrs))
 	}
 	return EventsResponse{Events: es}
+}
+
+// NOTE: The following endpoint is for demonstration purposes
+type Proposal struct {
+	ExecutorResult     string           `json:"executor_result"`
+	FinalTallyResult   FinalTallyResult `json:"final_tally_result"`
+	GroupPolicyAddress string           `json:"group_policy_address"`
+	GroupPolicyVersion string           `json:"group_policy_version"`
+	GroupVersion       string           `json:"group_version"`
+	Id                 string           `json:"id"`
+	Messages           []any            `json:"messages"`
+	Metadata           string           `json:"metadata"`
+	Proposers          []string         `json:"proposers"`
+	Status             string           `json:"status"`
+	SubmitTime         string           `json:"submit_time"`
+	VotingPeriodEnd    string           `json:"voting_period_end"`
+}
+
+// NOTE: The following endpoint is for demonstration purposes
+type FinalTallyResult struct {
+	AbstainCount    string `json:"abstain_count"`
+	NoCount         string `json:"no_count"`
+	NoWithVetoCount string `json:"no_with_veto_count"`
+	YesCount        string `json:"yes_count"`
+}
+
+// NOTE: The following endpoint is for demonstration purposes
+func NewProposalsResponse(proposals []Proposal) []Proposal {
+	return proposals
 }

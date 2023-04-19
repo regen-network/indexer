@@ -69,6 +69,106 @@ func (q *Queries) GetChainMsgEventAttrs(ctx context.Context, arg GetChainMsgEven
 	return items, nil
 }
 
+const getChainMsgEventExecByMsg = `-- name: GetChainMsgEventExecByMsg :many
+SELECT chain_num, block_height, tx_idx, msg_idx, type FROM msg_event
+WHERE chain_num=$1
+AND block_height=$2
+AND tx_idx=$3
+AND msg_idx=$4
+AND type='cosmos.group.v1.EventExec'
+`
+
+type GetChainMsgEventExecByMsgParams struct {
+	ChainNum    int16
+	BlockHeight int64
+	TxIdx       int16
+	MsgIdx      int16
+}
+
+func (q *Queries) GetChainMsgEventExecByMsg(ctx context.Context, arg GetChainMsgEventExecByMsgParams) ([]MsgEvent, error) {
+	rows, err := q.db.QueryContext(ctx, getChainMsgEventExecByMsg,
+		arg.ChainNum,
+		arg.BlockHeight,
+		arg.TxIdx,
+		arg.MsgIdx,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MsgEvent
+	for rows.Next() {
+		var i MsgEvent
+		if err := rows.Scan(
+			&i.ChainNum,
+			&i.BlockHeight,
+			&i.TxIdx,
+			&i.MsgIdx,
+			&i.Type,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getChainMsgEventSubmitProposalByMsg = `-- name: GetChainMsgEventSubmitProposalByMsg :many
+SELECT chain_num, block_height, tx_idx, msg_idx, type FROM msg_event
+WHERE chain_num=$1
+AND block_height=$2
+AND tx_idx=$3
+AND msg_idx=$4
+AND type='cosmos.group.v1.EventSubmitProposal'
+`
+
+type GetChainMsgEventSubmitProposalByMsgParams struct {
+	ChainNum    int16
+	BlockHeight int64
+	TxIdx       int16
+	MsgIdx      int16
+}
+
+func (q *Queries) GetChainMsgEventSubmitProposalByMsg(ctx context.Context, arg GetChainMsgEventSubmitProposalByMsgParams) ([]MsgEvent, error) {
+	rows, err := q.db.QueryContext(ctx, getChainMsgEventSubmitProposalByMsg,
+		arg.ChainNum,
+		arg.BlockHeight,
+		arg.TxIdx,
+		arg.MsgIdx,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MsgEvent
+	for rows.Next() {
+		var i MsgEvent
+		if err := rows.Scan(
+			&i.ChainNum,
+			&i.BlockHeight,
+			&i.TxIdx,
+			&i.MsgIdx,
+			&i.Type,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getChainMsgEvents = `-- name: GetChainMsgEvents :many
 SELECT chain_num, block_height, tx_idx, msg_idx, type FROM msg_event WHERE chain_num=$1 ORDER BY block_height,tx_idx,msg_idx
 `
@@ -126,6 +226,90 @@ func (q *Queries) GetChainMsgEventsByType(ctx context.Context, arg GetChainMsgEv
 			&i.TxIdx,
 			&i.MsgIdx,
 			&i.Type,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getChainMsgExecByProposal = `-- name: GetChainMsgExecByProposal :many
+SELECT chain_num, block_height, tx_idx, msg_idx, data FROM msg
+WHERE chain_num=$1
+AND data->>'@type'='/cosmos.group.v1.MsgExec'
+AND data->>'proposal_id'=$2
+ORDER BY block_height,tx_idx,msg_idx
+`
+
+type GetChainMsgExecByProposalParams struct {
+	ChainNum int16
+	Data     json.RawMessage
+}
+
+func (q *Queries) GetChainMsgExecByProposal(ctx context.Context, arg GetChainMsgExecByProposalParams) ([]Msg, error) {
+	rows, err := q.db.QueryContext(ctx, getChainMsgExecByProposal, arg.ChainNum, arg.Data)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Msg
+	for rows.Next() {
+		var i Msg
+		if err := rows.Scan(
+			&i.ChainNum,
+			&i.BlockHeight,
+			&i.TxIdx,
+			&i.MsgIdx,
+			&i.Data,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getChainMsgSubmitProposalByPolicy = `-- name: GetChainMsgSubmitProposalByPolicy :many
+SELECT chain_num, block_height, tx_idx, msg_idx, data FROM msg
+WHERE chain_num=$1
+AND data->>'@type'='/cosmos.group.v1.MsgSubmitProposal'
+AND data->>'group_policy_address'=$2
+ORDER BY block_height,tx_idx,msg_idx
+`
+
+type GetChainMsgSubmitProposalByPolicyParams struct {
+	ChainNum int16
+	Data     json.RawMessage
+}
+
+func (q *Queries) GetChainMsgSubmitProposalByPolicy(ctx context.Context, arg GetChainMsgSubmitProposalByPolicyParams) ([]Msg, error) {
+	rows, err := q.db.QueryContext(ctx, getChainMsgSubmitProposalByPolicy, arg.ChainNum, arg.Data)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Msg
+	for rows.Next() {
+		var i Msg
+		if err := rows.Scan(
+			&i.ChainNum,
+			&i.BlockHeight,
+			&i.TxIdx,
+			&i.MsgIdx,
+			&i.Data,
 		); err != nil {
 			return nil, err
 		}

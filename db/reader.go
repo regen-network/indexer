@@ -26,6 +26,18 @@ type Reader interface {
 
 	// GetChainEventAttrs gets event attributes by event.
 	GetChainEventAttrs(ctx context.Context, event MsgEvent) ([]MsgEventAttr, error)
+
+	// GetChainMsgSubmitProposalByPolicy gets submit proposal messages by chain id and policy address.
+	GetChainMsgSubmitProposalByPolicy(ctx context.Context, chainId string, policy string) ([]Msg, error)
+
+	// GetChainMsgEventSubmitProposalByMsg gets submit proposal event by message.
+	GetChainMsgEventSubmitProposalByMsg(ctx context.Context, msg Msg) ([]MsgEvent, error)
+
+	// GetChainMsgExecByProposal gets exec proposal messages by chain id and proposal id.
+	GetChainMsgExecByProposal(ctx context.Context, chainId string, proposal string) ([]Msg, error)
+
+	// GetChainMsgEventExecByMsg gets exec events by message.
+	GetChainMsgEventExecByMsg(ctx context.Context, msg Msg) ([]MsgEvent, error)
 }
 
 var _ Reader = &dbImpl{}
@@ -78,5 +90,45 @@ func (db *dbImpl) GetChainEventAttrs(ctx context.Context, event MsgEvent) ([]Msg
 		BlockHeight: event.BlockHeight,
 		TxIdx:       event.TxIdx,
 		MsgIdx:      event.MsgIdx,
+	})
+}
+
+func (db *dbImpl) GetChainMsgSubmitProposalByPolicy(ctx context.Context, chainId string, policy string) ([]Msg, error) {
+	chain, err := db.queries.GetChain(ctx, chainId)
+	if err != nil {
+		return nil, err
+	}
+	return db.queries.GetChainMsgSubmitProposalByPolicy(ctx, GetChainMsgSubmitProposalByPolicyParams{
+		ChainNum: chain.Num,
+		Data:     json.RawMessage(policy),
+	})
+}
+
+func (db *dbImpl) GetChainMsgEventSubmitProposalByMsg(ctx context.Context, msg Msg) ([]MsgEvent, error) {
+	return db.queries.GetChainMsgEventSubmitProposalByMsg(ctx, GetChainMsgEventSubmitProposalByMsgParams{
+		ChainNum:    msg.ChainNum,
+		BlockHeight: msg.BlockHeight,
+		TxIdx:       msg.TxIdx,
+		MsgIdx:      msg.MsgIdx,
+	})
+}
+
+func (db *dbImpl) GetChainMsgExecByProposal(ctx context.Context, chainId string, proposal string) ([]Msg, error) {
+	chain, err := db.queries.GetChain(ctx, chainId)
+	if err != nil {
+		return nil, err
+	}
+	return db.queries.GetChainMsgExecByProposal(ctx, GetChainMsgExecByProposalParams{
+		ChainNum: chain.Num,
+		Data:     json.RawMessage(proposal),
+	})
+}
+
+func (db *dbImpl) GetChainMsgEventExecByMsg(ctx context.Context, msg Msg) ([]MsgEvent, error) {
+	return db.queries.GetChainMsgEventExecByMsg(ctx, GetChainMsgEventExecByMsgParams{
+		ChainNum:    msg.ChainNum,
+		BlockHeight: msg.BlockHeight,
+		TxIdx:       msg.TxIdx,
+		MsgIdx:      msg.MsgIdx,
 	})
 }
