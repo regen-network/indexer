@@ -1,0 +1,33 @@
+services:
+   db:
+     container_name: db_container
+     image: postgres:14
+     restart: always
+     user: postgres
+     expose:
+       - 5432
+     ports:
+       - 5432:5432
+     environment:
+       POSTGRES_PASSWORD: password
+     healthcheck:
+       test: ["CMD-SHELL", "pg_isready"]
+       interval: 1s
+       timeout: 10s
+       retries: 100
+
+   indexer:
+     container_name: indexer_container
+     build:
+       context: .
+       dockerfile: docker/indexer.Dockerfile
+     working_dir: /home/indexer
+     environment:
+       DATABASE_URL: postgres://postgres:password@localhost:5432/postgres?sslmode=disable
+       REGEN_API: http://localhost:1317
+       REGEN_RPC: http://localhost:26657
+     entrypoint: ["/bin/sh", "-c", "./start.sh"]
+     network_mode: host
+     depends_on:
+       db:
+         condition: service_healthy
