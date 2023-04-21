@@ -2,6 +2,8 @@ import base64
 import hashlib
 import logging
 import os
+import json
+import re
 import time
 import requests
 import psycopg2
@@ -13,6 +15,10 @@ load_dotenv()
 
 logging.getLogger().setLevel(logging.INFO)
 
+class SanitizedJson(Json):
+    def dumps(self, obj):
+        string = json.dumps(obj)
+        return re.sub(r"(\\u0000)","", string)
 
 class BasicClient:
     def __init__(self, rpc, api):
@@ -46,7 +52,6 @@ class BasicClient:
     def get_tx(self, tx_hash):
         return requests.get(self.rpc + '/tx?hash=' + tx_hash).json()
 
-
 def index_block(pg_conn, client: BasicClient, chain_num, height):
     block = client.get_block(height)
     block_time = block['result']['block']['header']['time']
@@ -57,7 +62,7 @@ def index_block(pg_conn, client: BasicClient, chain_num, height):
     for tx_idx, tx in enumerate(txs):
         cur.execute(
             'INSERT INTO tx (chain_num, block_height, tx_idx, hash, data) VALUES (%s, %s,%s,%s,%s) ON CONFLICT DO NOTHING',
-            (chain_num, height, tx_idx, tx['hash'], Json(tx['tx']))),
+            (chain_num, height, tx_idx, tx['hash'], SanitizedJson(tx['tx']))),
         for msg_idx, msg in enumerate(tx['tx']['tx']['body']['messages']):
             cur.execute('INSERT INTO msg (chain_num, block_height, tx_idx, msg_idx, data) VALUES (%s,%s,%s,%s,%s) '
                         "ON CONFLICT DO NOTHING",
