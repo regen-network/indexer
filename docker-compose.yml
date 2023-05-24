@@ -24,8 +24,8 @@ services:
      working_dir: /home/indexer
      environment:
        DATABASE_URL: postgres://postgres:password@localhost:5432/postgres?sslmode=disable
-       REGEN_API: http://localhost:1317
-       REGEN_RPC: http://localhost:26657
+       REGEN_API: http://archive.regen.network:1317
+       REGEN_RPC: http://archive.regen.network:26657
      entrypoint: ["/bin/sh", "-c", "./start.sh"]
      network_mode: host
      depends_on:
