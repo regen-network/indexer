@@ -8,7 +8,7 @@ authors = ["Aaron Craelius <aaronc@users.noreply.github.com>"]
 python = "^3.9"
 requests = "^2.25.1"
 python-dotenv = "^0.18.0"
-psycopg2-binary = "^2.9.1"
+psycopg2-binary = "^2.9.6"
 
 [tool.poetry.dev-dependencies]
 
