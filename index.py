@@ -95,7 +95,12 @@ def index_blocks(pg_conn, client: BasicClient):
     cur.execute('SELECT max(height) FROM block WHERE chain_num = %s', (chain_num,))
     res = cur.fetchone()
     cur.close()
-    if res == (None,):
+
+    start_block_override = os.environ.get("START_BLOCK_OVERRIDE")
+    if start_block_override:
+        next_height = int(start_block_override)
+        logging.warning(f"using START_BLOCK_OVERRIDE.. {next_height=}")
+    elif res == (None,):
         next_height = client.earliest_block_height()
     else:
         next_height = res[0] + 1
