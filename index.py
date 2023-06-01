@@ -81,10 +81,20 @@ def index_block(pg_conn, client: BasicClient, chain_num, height):
         logger.debug(f"number of rows affected by insert: {cur.rowcount=}")
 
         for msg_idx, msg in enumerate(tx["tx"]["tx"]["body"]["messages"]):
-            cur.execute(
-                "INSERT INTO msg (chain_num, block_height, tx_idx, msg_idx, data) VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
-                (chain_num, height, tx_idx, msg_idx, Json(msg)),
-            )
+            logger.debug(f"processing {tx_idx=} {msg['@type']=} {msg_idx=}")
+            try:
+                # set up an isolated database transaction for the next query:
+                # https://www.psycopg.org/docs/usage.html#with-statement
+                # otherwise the higher-level cursor is put into a failed state
+                with pg_conn:
+                    with pg_conn.cursor() as _cur:
+                        _cur.execute(
+                            "INSERT INTO msg (chain_num, block_height, tx_idx, msg_idx, data) VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
+                            (chain_num, height, tx_idx, msg_idx, Json(msg)),
+                        )
+            except psycopg2.errors.ForeignKeyViolation as exc:
+                # TODO: send this exception to sentry
+                logger.error(exc, exc_info=True)
             if tx["tx"]["tx_response"]["code"] == 0:
                 for evt in tx["tx"]["tx_response"]["logs"][msg_idx]["events"]:
                     cur.execute(
@@ -107,9 +117,9 @@ def index_block(pg_conn, client: BasicClient, chain_num, height):
                                 "value": attr["value"],
                             },
                         )
-    pg_conn.commit()
             else:
                 logger.debug(f"no events in for {msg_idx=} in {tx_idx=}...")
+    pg_conn.commit()
     cur.close()
 
 
