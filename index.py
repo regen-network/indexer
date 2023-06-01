@@ -13,7 +13,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-logging.getLogger().setLevel(os.environ.get("LOGLEVEL", logging.INFO))
+logging.basicConfig(
+    level=os.environ.get("LOGLEVEL", logging.INFO),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger()
 
 
 class SanitizedJson(Json):
@@ -66,15 +70,15 @@ def index_block(pg_conn, client: BasicClient, chain_num, height):
         (chain_num, height, Json(block), block_time),
     )
     txs = client.get_block_txs(block)
-    logging.debug(f"{height=} {len(txs)=}")
+    logger.debug(f"{height=} {len(txs)=}")
 
     for tx_idx, tx in enumerate(txs):
-        logging.debug(f"{chain_num=} {height=} {tx_idx=}")
+        logger.debug(f"{chain_num=} {height=} {tx_idx=}")
         cur.execute(
             "INSERT INTO tx (chain_num, block_height, tx_idx, hash, data) VALUES (%s, %s,%s,%s,%s) ON CONFLICT DO NOTHING",
             (chain_num, height, tx_idx, tx["hash"], SanitizedJson(tx["tx"])),
         )
-        logging.debug(f"{cur.rowcount=}")
+        logger.debug(f"number of rows affected by insert: {cur.rowcount=}")
 
         for msg_idx, msg in enumerate(tx["tx"]["tx"]["body"]["messages"]):
             cur.execute(
@@ -104,6 +108,8 @@ def index_block(pg_conn, client: BasicClient, chain_num, height):
                             },
                         )
     pg_conn.commit()
+            else:
+                logger.debug(f"no events in for {msg_idx=} in {tx_idx=}...")
     cur.close()
 
 
@@ -125,7 +131,7 @@ def index_blocks(pg_conn, client: BasicClient):
     start_block_override = os.environ.get("START_BLOCK_OVERRIDE")
     if start_block_override:
         next_height = int(start_block_override)
-        logging.warning(f"using START_BLOCK_OVERRIDE.. {next_height=}")
+        logger.warning(f"using START_BLOCK_OVERRIDE.. {next_height=}")
     elif res == (None,):
         next_height = client.earliest_block_height()
     else:
@@ -136,7 +142,7 @@ def index_blocks(pg_conn, client: BasicClient):
         while latest_height < next_height:
             time.sleep(1)
             latest_height = client.latest_block_height()
-        logging.info("indexing " + client.chain_id + " block " + str(next_height))
+        logger.info("indexing " + client.chain_id + " block " + str(next_height))
         index_block(pg_conn, client, chain_num, next_height)
         next_height = next_height + 1
 
