@@ -107,33 +107,33 @@ def index_block(pg_conn, client: BasicClient, chain_num, height):
                             "INSERT INTO msg (chain_num, block_height, tx_idx, msg_idx, data) VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
                             (chain_num, height, tx_idx, msg_idx, Json(msg)),
                         )
+                if tx["tx"]["tx_response"]["code"] == 0:
+                    for evt in tx["tx"]["tx_response"]["logs"][msg_idx]["events"]:
+                        cur.execute(
+                            "INSERT INTO msg_event (chain_num, block_height, tx_idx, msg_idx, type) VALUES (%s,%s,%s,%s,%s) "
+                            "ON CONFLICT DO NOTHING",
+                            (chain_num, height, tx_idx, msg_idx, evt["type"]),
+                        )
+                        for attr in evt["attributes"]:
+                            cur.execute(
+                                "INSERT INTO msg_event_attr (chain_num, block_height, tx_idx, msg_idx, type, key, value, value_hash) "
+                                "VALUES (%(chain_num)s, %(height)s,%(tx_idx)s,%(msg_idx)s,%(type)s,%(key)s,%(value)s,digest(%(value)s, 'sha256')) "
+                                "ON CONFLICT DO NOTHING",
+                                {
+                                    "chain_num": chain_num,
+                                    "height": height,
+                                    "tx_idx": tx_idx,
+                                    "msg_idx": msg_idx,
+                                    "type": evt["type"],
+                                    "key": attr["key"],
+                                    "value": attr["value"],
+                                },
+                            )
+                else:
+                    logger.debug(f"no events in for {msg_idx=} in {tx_idx=}...")
             except psycopg2.errors.ForeignKeyViolation as exc:
                 capture_exception(exc)
                 logger.error(exc, exc_info=True)
-            if tx["tx"]["tx_response"]["code"] == 0:
-                for evt in tx["tx"]["tx_response"]["logs"][msg_idx]["events"]:
-                    cur.execute(
-                        "INSERT INTO msg_event (chain_num, block_height, tx_idx, msg_idx, type) VALUES (%s,%s,%s,%s,%s) "
-                        "ON CONFLICT DO NOTHING",
-                        (chain_num, height, tx_idx, msg_idx, evt["type"]),
-                    )
-                    for attr in evt["attributes"]:
-                        cur.execute(
-                            "INSERT INTO msg_event_attr (chain_num, block_height, tx_idx, msg_idx, type, key, value, value_hash) "
-                            "VALUES (%(chain_num)s, %(height)s,%(tx_idx)s,%(msg_idx)s,%(type)s,%(key)s,%(value)s,digest(%(value)s, 'sha256')) "
-                            "ON CONFLICT DO NOTHING",
-                            {
-                                "chain_num": chain_num,
-                                "height": height,
-                                "tx_idx": tx_idx,
-                                "msg_idx": msg_idx,
-                                "type": evt["type"],
-                                "key": attr["key"],
-                                "value": attr["value"],
-                            },
-                        )
-            else:
-                logger.debug(f"no events in for {msg_idx=} in {tx_idx=}...")
     pg_conn.commit()
     cur.close()
 
