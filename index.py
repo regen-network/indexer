@@ -6,6 +6,8 @@ import json
 import re
 import time
 import requests
+import sentry_sdk
+from sentry_sdk import capture_exception
 import psycopg2
 from psycopg2.extensions import parse_dsn
 from psycopg2.extras import Json
@@ -18,6 +20,19 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger()
+
+
+SENTRY_DSN = os.environ.get("SENTRY_DSN")
+if SENTRY_DSN:
+    logger.debug("initializing sentry..")
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production.
+        traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+        environment=os.environ.get("SENTRY_ENVIRONMENT", "development"),
+    )
 
 
 class SanitizedJson(Json):
@@ -93,7 +108,7 @@ def index_block(pg_conn, client: BasicClient, chain_num, height):
                             (chain_num, height, tx_idx, msg_idx, Json(msg)),
                         )
             except psycopg2.errors.ForeignKeyViolation as exc:
-                # TODO: send this exception to sentry
+                capture_exception(exc)
                 logger.error(exc, exc_info=True)
             if tx["tx"]["tx_response"]["code"] == 0:
                 for evt in tx["tx"]["tx_response"]["logs"][msg_idx]["events"]:
