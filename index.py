@@ -149,6 +149,17 @@ def index_blocks(pg_conn, client: BasicClient):
         res = cur.fetchone()
     chain_num = res[0]
 
+    if os.environ.get("ONLY_INDEX_SPECIFIC_BLOCKS"):
+        # this environment variable overrides the indexing process to only index specific blocks
+        # the blocks that will be indexed must be in a single-column plain text file
+        # each row in the file is the block height that we want indexed
+        # this is useful for local development of the indexer when you are interested in specific blocks
+        with open("blocks.txt", "r") as fp:
+            blocks = [int(x.strip()) for x in fp.readlines()]
+        for block in blocks:
+            index_block(pg_conn, client, chain_num, block)
+        return None
+
     cur.execute("SELECT max(height) FROM block WHERE chain_num = %s", (chain_num,))
     res = cur.fetchone()
     cur.close()
