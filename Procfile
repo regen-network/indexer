@@ -1,1 +1,1 @@
-index-regen: python index.py
+index-regen: python main.py
