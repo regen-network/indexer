@@ -114,9 +114,11 @@ def events_to_process(cur, index_table_name):
            mea.msg_idx,
            mea.key,
            mea.value,
-           mea.chain_num
+           mea.chain_num,
+           TRIM(BOTH '"' FROM (tx.data -> 'tx_response' -> 'timestamp')::text) AS timestamp
     FROM msg_event_attr AS mea
     NATURAL LEFT JOIN {index_table_name} AS e
+    NATURAL LEFT JOIN tx
     WHERE mea.type IN {formatted_event_names_set} 
         AND (e.block_height IS NULL
              AND e.type IS NULL

@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS
     jurisdiction TEXT NOT NULL,
     OWNER TEXT NOT NULL,
     reason TEXT NOT NULL,
+    TIMESTAMP timestamptz,
+    memo TEXT NOT NULL,
     block_height BIGINT NOT NULL,
     chain_num SMALLINT NOT NULL,
     tx_idx SMALLINT NOT NULL,

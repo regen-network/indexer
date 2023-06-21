@@ -10,7 +10,7 @@ def _index_retires(pg_conn, _client, _chain_num):
             cur,
             "retirements",
         ):
-            (type, block_height, tx_idx, msg_idx, _, _, chain_num) = event[0]
+            (type, block_height, tx_idx, msg_idx, _, _, chain_num, timestamp) = event[0]
             normalize = {}
             normalize["type"] = type
             normalize["block_height"] = block_height
@@ -18,7 +18,7 @@ def _index_retires(pg_conn, _client, _chain_num):
             normalize["msg_idx"] = msg_idx
             normalize["chain_num"] = chain_num
             for entry in event:
-                (_, _, _, _, key, value, _) = entry
+                (_, _, _, _, key, value, _, _) = entry
                 value = value.strip('"')
                 if "v1alpha1.EventRetire" in entry[0]:
                     if key == "amount":
@@ -33,25 +33,32 @@ def _index_retires(pg_conn, _client, _chain_num):
                     normalize[key] = value
                 if "reason" not in normalize:
                     normalize["reason"] = ""
-            retirement = (
-                normalize["type"],
-                normalize["amount"],
-                normalize["batch_denom"],
-                normalize["jurisdiction"],
-                normalize["owner"],
-                normalize["reason"],
-                normalize["block_height"],
-                normalize["chain_num"],
-                normalize["tx_idx"],
-                normalize["msg_idx"],
-            )
             with pg_conn.cursor() as _cur:
                 _cur.execute(
-                    "INSERT INTO retirements (type, amount, batch_denom, jurisdiction, owner, reason, block_height, chain_num, tx_idx, msg_idx) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    """SELECT TRIM(BOTH '"' FROM (tx.data -> 'tx' -> 'body' -> 'memo')::text) AS memo FROM tx WHERE block_height=%s AND chain_num=%s AND tx_idx=%s""",
+                    (block_height, chain_num, tx_idx),
+                )
+                (memo,) = _cur.fetchone()
+                retirement = (
+                    normalize["type"],
+                    normalize["amount"],
+                    normalize["batch_denom"],
+                    normalize["jurisdiction"],
+                    normalize["owner"],
+                    normalize["reason"],
+                    normalize["block_height"],
+                    normalize["chain_num"],
+                    normalize["tx_idx"],
+                    normalize["msg_idx"],
+                    timestamp,
+                    memo,
+                )
+                _cur.execute(
+                    "INSERT INTO retirements (type, amount, batch_denom, jurisdiction, owner, reason, block_height, chain_num, tx_idx, msg_idx, timestamp, memo) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     retirement,
                 )
-                logger.info("retirement inserted...")
                 pg_conn.commit()
+                logger.info("retirement inserted...")
 
 
 def index_retires():
