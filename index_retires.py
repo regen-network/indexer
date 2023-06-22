@@ -31,30 +31,29 @@ def _index_retires(pg_conn, _client, _chain_num):
                         normalize["owner"] = value
                 elif "v1.EventRetire" in entry[0]:
                     normalize[key] = value
-                if "reason" not in normalize:
-                    normalize["reason"] = ""
             with pg_conn.cursor() as _cur:
                 _cur.execute(
                     """SELECT TRIM(BOTH '"' FROM (tx.data -> 'tx' -> 'body' -> 'memo')::text) AS memo FROM tx WHERE block_height=%s AND chain_num=%s AND tx_idx=%s""",
                     (block_height, chain_num, tx_idx),
                 )
                 (memo,) = _cur.fetchone()
+                if not normalize.get("reason") and memo:
+                    normalize["reason"] = memo
                 retirement = (
                     normalize["type"],
                     normalize["amount"],
                     normalize["batch_denom"],
                     normalize["jurisdiction"],
                     normalize["owner"],
-                    normalize["reason"],
+                    normalize.get("reason", ""),
                     normalize["block_height"],
                     normalize["chain_num"],
                     normalize["tx_idx"],
                     normalize["msg_idx"],
                     timestamp,
-                    memo,
                 )
                 _cur.execute(
-                    "INSERT INTO retirements (type, amount, batch_denom, jurisdiction, owner, reason, block_height, chain_num, tx_idx, msg_idx, timestamp, memo) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    "INSERT INTO retirements (type, amount, batch_denom, jurisdiction, owner, reason, block_height, chain_num, tx_idx, msg_idx, timestamp) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     retirement,
                 )
                 pg_conn.commit()
