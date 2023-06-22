@@ -68,15 +68,14 @@ class PollingProcess(Process):
         self.client = BasicClient(os.environ["REGEN_RPC"], os.environ["REGEN_API"])
         with self.pg_conn.cursor() as cur:
             cur.execute(
+                "INSERT INTO chain (chain_id) VALUES (%s) ON CONFLICT DO NOTHING",
+                (self.client.chain_id,),
+            )
+            self.pg_conn.commit()
+            cur.execute(
                 "SELECT num FROM chain WHERE chain_id = %s", (self.client.chain_id,)
             )
             res = cur.fetchone()
-            if res is None:
-                cur.execute(
-                    "INSERT INTO chain (chain_id) VALUES (%s) RETURNING num",
-                    (self.client.chain_id,),
-                )
-                res = cur.fetchone()
             chain_num = res[0]
         while True:
             try:
