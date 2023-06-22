@@ -74,7 +74,7 @@ class PollingProcess(Process):
             if res is None:
                 cur.execute(
                     "INSERT INTO chain (chain_id) VALUES (%s) RETURNING num",
-                    (client.chain_id,),
+                    (self.client.chain_id,),
                 )
                 res = cur.fetchone()
             chain_num = res[0]
