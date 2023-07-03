@@ -12,7 +12,9 @@ import psycopg2
 from psycopg2.extensions import parse_dsn
 from psycopg2.extras import Json
 import requests
+from requests.exceptions import HTTPError
 from sentry_sdk import capture_exception
+from tenacity import retry, wait_exponential, retry_if_exception_type
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +43,9 @@ class BasicClient:
     def get_block(self, height):
         return requests.get(self.rpc + "/block?height=" + str(height)).json()
 
+    @retry(
+        retry=retry_if_exception_type(HTTPError), wait=wait_exponential(min=4, max=60)
+    )
     def get_block_txs(self, block):
         txs = block["result"]["block"]["data"]["txs"]
         txs_json = []
@@ -48,9 +53,9 @@ class BasicClient:
             tx_bytes = base64.b64decode(tx)
             tx_hash = hashlib.sha256(tx_bytes).digest()
             tx_hash_b16 = base64.b16encode(tx_hash).decode("utf8")
-            tx_json = requests.get(
-                self.api + "/cosmos/tx/v1beta1/txs/" + tx_hash_b16
-            ).json()
+            tx_resp = requests.get(self.api + "/cosmos/tx/v1beta1/txs/" + tx_hash_b16)
+            tx_resp.raise_for_status()
+            tx_json = tx_resp.json()
             txs_json.append({"hash": tx_hash, "tx": tx_json})
         return txs_json
 
