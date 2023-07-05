@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import sentry_sdk
 from index_blocks import index_blocks
 from index_retires import index_retires
+from index_proposals import index_proposals
 
 load_dotenv()
 
@@ -32,3 +33,4 @@ if SENTRY_DSN:
 if __name__ == "__main__":
     index_blocks()
     index_retires()
+    index_proposals()
