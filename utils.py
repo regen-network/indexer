@@ -119,7 +119,8 @@ def events_to_process(cur, index_table_name):
            mea.key,
            mea.value,
            mea.chain_num,
-           TRIM(BOTH '"' FROM (tx.data -> 'tx_response' -> 'timestamp')::text) AS timestamp
+           TRIM(BOTH '"' FROM (tx.data -> 'tx_response' -> 'timestamp')::text) AS timestamp,
+           encode(tx.hash, 'hex') as tx_hash
     FROM msg_event_attr AS mea
     NATURAL LEFT JOIN {index_table_name} AS e
     NATURAL LEFT JOIN tx

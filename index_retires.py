@@ -10,15 +10,27 @@ def _index_retires(pg_conn, _client, _chain_num):
             cur,
             "retirements",
         ):
-            (type, block_height, tx_idx, msg_idx, _, _, chain_num, timestamp) = event[0]
+            (
+                type,
+                block_height,
+                tx_idx,
+                msg_idx,
+                _,
+                _,
+                chain_num,
+                timestamp,
+                tx_hash,
+            ) = event[0]
             normalize = {}
             normalize["type"] = type
             normalize["block_height"] = block_height
             normalize["tx_idx"] = tx_idx
             normalize["msg_idx"] = msg_idx
             normalize["chain_num"] = chain_num
+            normalize["timestamp"] = timestamp
+            normalize["tx_hash"] = tx_hash
             for entry in event:
-                (_, _, _, _, key, value, _, _) = entry
+                (_, _, _, _, key, value, _, _, _) = entry
                 value = value.strip('"')
                 if "v1alpha1.EventRetire" in entry[0]:
                     if key == "amount":
@@ -50,10 +62,11 @@ def _index_retires(pg_conn, _client, _chain_num):
                     normalize["chain_num"],
                     normalize["tx_idx"],
                     normalize["msg_idx"],
-                    timestamp,
+                    normalize["timestamp"],
+                    normalize["tx_hash"],
                 )
                 _cur.execute(
-                    "INSERT INTO retirements (type, amount, batch_denom, jurisdiction, owner, reason, block_height, chain_num, tx_idx, msg_idx, timestamp) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    "INSERT INTO retirements (type, amount, batch_denom, jurisdiction, owner, reason, block_height, chain_num, tx_idx, msg_idx, timestamp, tx_hash) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     retirement,
                 )
                 pg_conn.commit()
