@@ -1,5 +1,6 @@
 import logging
 import os
+import textwrap
 from psycopg2.extras import Json
 import requests
 from utils import PollingProcess, events_to_process
@@ -13,7 +14,7 @@ def fetch_proposal(height, proposal_id):
         headers={"x-cosmos-block-height": str(height)},
     )
     resp.raise_for_status()
-    return resp.json()
+    return resp.json()["proposal"]
 
 
 def _index_proposals(pg_conn, _client, _chain_num):
@@ -34,24 +35,72 @@ def _index_proposals(pg_conn, _client, _chain_num):
                 (_, _, _, _, key, value, _, _) = entry
                 value = value.strip('"')
                 normalize[key] = value
-            normalize["metadata"] = fetch_proposal(
+            proposal = fetch_proposal(
                 normalize["block_height"] - 1, normalize["proposal_id"]
             )
+            row = (
+                normalize["type"],
+                normalize["block_height"],
+                normalize["tx_idx"],
+                normalize["msg_idx"],
+                normalize["chain_num"],
+                normalize["timestamp"],
+                proposal["id"],
+                proposal["status"],
+                proposal["group_policy_address"],
+                proposal["metadata"],
+                proposal["proposers"],
+                proposal["submit_time"],
+                proposal["group_version"],
+                proposal["group_policy_version"],
+                Json(proposal["final_tally_result"]),
+                proposal["voting_period_end"],
+                proposal["executor_result"],
+                Json(proposal["messages"]),
+            )
+            insert_text = textwrap.dedent("""
+            INSERT INTO proposals (
+                type,
+                block_height,
+                tx_idx,
+                msg_idx,
+                chain_num,
+                timestamp,
+                proposal_id,
+                status,
+                group_policy_address,
+                metadata,
+                proposers,
+                submit_time,
+                group_version,
+                group_policy_version,
+                final_tally_result,
+                voting_period_end,
+                executor_result,
+                messages
+            ) VALUES (
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s
+            );""").strip("\n")
             with pg_conn.cursor() as _cur:
-                row = (
-                    normalize["type"],
-                    normalize["proposal_id"],
-                    normalize["status"],
-                    normalize["tally_result"],
-                    normalize["timestamp"],
-                    normalize["block_height"],
-                    normalize["chain_num"],
-                    normalize["tx_idx"],
-                    normalize["msg_idx"],
-                    Json(normalize["metadata"]),
-                )
                 _cur.execute(
-                    "INSERT INTO proposals (type, proposal_id, status, tally_result, timestamp, block_height, chain_num, tx_idx, msg_idx, metadata) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    insert_text,
                     row,
                 )
                 logger.debug(_cur.statusmessage)
