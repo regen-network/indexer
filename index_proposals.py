@@ -23,7 +23,7 @@ def _index_proposals(pg_conn, _client, _chain_num):
             cur,
             "proposals",
         ):
-            (type, block_height, tx_idx, msg_idx, _, _, chain_num, timestamp) = event[0]
+            (type, block_height, tx_idx, msg_idx, _, _, chain_num, timestamp, tx_hash) = event[0]
             normalize = {}
             normalize["type"] = type
             normalize["block_height"] = block_height
@@ -31,8 +31,9 @@ def _index_proposals(pg_conn, _client, _chain_num):
             normalize["msg_idx"] = msg_idx
             normalize["chain_num"] = chain_num
             normalize["timestamp"] = timestamp
+            normalize["tx_hash"] = tx_hash
             for entry in event:
-                (_, _, _, _, key, value, _, _) = entry
+                (_, _, _, _, key, value, _, _, _) = entry
                 value = value.strip('"')
                 normalize[key] = value
             proposal = fetch_proposal(
@@ -45,6 +46,7 @@ def _index_proposals(pg_conn, _client, _chain_num):
                 normalize["msg_idx"],
                 normalize["chain_num"],
                 normalize["timestamp"],
+                normalize["tx_hash"],
                 proposal["id"],
                 proposal["status"],
                 proposal["group_policy_address"],
@@ -66,6 +68,7 @@ def _index_proposals(pg_conn, _client, _chain_num):
                 msg_idx,
                 chain_num,
                 timestamp,
+                tx_hash,
                 proposal_id,
                 status,
                 group_policy_address,
@@ -79,6 +82,7 @@ def _index_proposals(pg_conn, _client, _chain_num):
                 executor_result,
                 messages
             ) VALUES (
+                %s,
                 %s,
                 %s,
                 %s,

@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS
     msg_idx SMALLINT NOT NULL,
     chain_num SMALLINT NOT NULL,
     TIMESTAMP timestamptz,
+    tx_hash TEXT NOT NULL,
 
     proposal_id BIGINT NOT NULL,
     status TEXT NOT NULL,
