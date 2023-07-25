@@ -10,3 +10,5 @@ psql -c "\i V1_3__add_msg_event_attr_type_idx.sql" $DATABASE_URL
 psql -c "\i V1_4__retirements_owner_idx.sql" $DATABASE_URL
 psql -c "\i V1_5__add_proposals_table.sql" $DATABASE_URL
 psql -c "\i V1_6__add_tx_hash.sql" $DATABASE_URL
+psql -c "\i V1_7__index_group_policy_address.sql" $DATABASE_URL
+psql -c "\i V1_8__index_proposal_id.sql" $DATABASE_URL
