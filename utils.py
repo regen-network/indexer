@@ -104,6 +104,10 @@ TABLE_EVENT_NAMES_MAP = {
         "regen.ecocredit.v1alpha1.EventRetire",
     ],
     "proposals": ["cosmos.group.v1.EventProposalPruned"],
+    "class_issuers": [
+        "regen.ecocredit.v1.EventCreateClass",
+        "regen.ecocredit.v1.EventUpdateClassIssuers",
+    ],
 }
 
 
