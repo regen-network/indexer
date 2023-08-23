@@ -108,6 +108,7 @@ TABLE_EVENT_NAMES_MAP = {
         "regen.ecocredit.v1.EventCreateClass",
         "regen.ecocredit.v1.EventUpdateClassIssuers",
     ],
+    "votes": ["cosmos.group.v1.EventVote"],
 }
 
 
