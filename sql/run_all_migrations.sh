@@ -12,3 +12,6 @@ psql -c "\i V1_5__add_proposals_table.sql" $DATABASE_URL
 psql -c "\i V1_6__add_tx_hash.sql" $DATABASE_URL
 psql -c "\i V1_7__index_group_policy_address.sql" $DATABASE_URL
 psql -c "\i V1_8__index_proposal_id.sql" $DATABASE_URL
+psql -c "\i V1_9__all_ecocredit_txes.sql" $DATABASE_URL
+psql -c "\i V1_10__class_issuers.sql" $DATABASE_URL
+psql -c "\i V1_11__class_issuers_indexes.sql" $DATABASE_URL
