@@ -146,3 +146,12 @@ def events_to_process(cur, index_table_name):
     # this is how key and value are put into their own column
     for _, g in groupby(cur, lambda x: f"{x[1]}-{x[2]}-{x[3]}"):
         yield list(g)
+
+
+def is_archive_node():
+    # since the indexer is intended to run against archive nodes,
+    # assume that by default the node is an archive node.
+    value = os.environ.get("REGEN_IS_ARCHIVE_NODE", "true").lower()
+    if value not in ["true", "false"]:
+        raise ValueError("REGEN_IS_ARCHIVE_NODE must be true or false")
+    return value == "true"
