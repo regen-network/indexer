@@ -117,6 +117,8 @@ def _index_votes(pg_conn, _client, _chain_num):
                     except ForeignKeyViolation as exc:
                         logger.debug(exc)
                         pg_conn.rollback()
+                        # since we know all votes for this proposal will fail we exit the loop
+                        break
 
 
 def index_votes():
