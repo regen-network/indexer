@@ -1,9 +1,3 @@
-ALTER TABLE IF EXISTS proposals
-DROP CONSTRAINT IF EXISTS proposals_proposal_id_ux;
-
-ALTER TABLE IF EXISTS proposals
-ADD CONSTRAINT proposals_proposal_id_ux UNIQUE (chain_num, proposal_id);
-
 CREATE TABLE IF NOT EXISTS
   votes (
     TYPE TEXT NOT NULL,
@@ -30,10 +24,13 @@ CREATE TABLE IF NOT EXISTS
       tx_idx,
       msg_idx,
       TYPE
-    ) REFERENCES msg_event,
-    FOREIGN KEY (chain_num, proposal_id) REFERENCES proposals (chain_num, proposal_id)
+    ) REFERENCES msg_event
   );
 
-DROP INDEX IF EXISTS votes_proposal_id_chain_num_idx;
-
 CREATE INDEX IF NOT EXISTS votes_proposal_id_chain_num_idx ON votes (proposal_id, chain_num);
+
+ALTER TABLE IF EXISTS votes
+DROP CONSTRAINT votes_chain_num_proposal_id_voter_ux;
+
+ALTER TABLE IF EXISTS votes
+ADD CONSTRAINT votes_chain_num_proposal_id_voter_ux UNIQUE (chain_num, proposal_id, voter);

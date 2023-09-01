@@ -3,7 +3,12 @@ import os
 import textwrap
 from psycopg2.errors import ForeignKeyViolation
 import requests
-from utils import is_archive_node, PollingProcess, events_to_process
+from utils import (
+    is_archive_node,
+    PollingProcess,
+    events_to_process,
+    new_events_to_process,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,73 +31,95 @@ def fetch_votes_by_proposal(height, proposal_id):
     return resp.json()["votes"]
 
 
+def gen_records(cur, query):
+    cur.execute(query)
+    for record in cur:
+        yield record
+
+
 def _index_votes(pg_conn, _client, _chain_num):
     with pg_conn.cursor() as cur:
-        for event in events_to_process(
-            cur,
-            "votes",
-        ):
-            (
-                type,
-                block_height,
-                tx_idx,
-                msg_idx,
-                _,
-                _,
-                chain_num,
-                timestamp,
-                tx_hash,
-            ) = event[0]
-            normalize = {}
-            normalize["type"] = type
-            normalize["block_height"] = block_height
-            normalize["tx_idx"] = tx_idx
-            normalize["msg_idx"] = msg_idx
-            normalize["chain_num"] = chain_num
-            normalize["timestamp"] = timestamp
-            normalize["tx_hash"] = tx_hash
-            for entry in event:
-                (_, _, _, _, key, value, _, _, _) = entry
-                value = value.strip('"')
-                normalize[key] = value
-            logger.debug(normalize)
-            votes = fetch_votes_by_proposal(
-                normalize["block_height"], normalize["proposal_id"]
+        all_chain_nums = [
+            record[0] for record in gen_records(cur, "select num from chain;")
+        ]
+        max_block_heights = {
+            chain_num: max_block_height
+            for chain_num, max_block_height in gen_records(
+                cur,
+                "select chain_num, MAX(block_height) from votes group by chain_num;",
             )
-            logger.debug(votes)
-            insert_text = textwrap.dedent(
-                """
-            INSERT INTO votes (
-                type,
-                block_height,
-                tx_idx,
-                msg_idx,
-                chain_num,
-                timestamp,
-                tx_hash,
-                proposal_id,
-                voter,
-                option,
-                metadata,
-                submit_time
-            ) VALUES (
-                %s,
-                %s,
-                %s,
-                %s,
-                %s,
-                %s,
-                %s,
-                %s,
-                %s,
-                %s,
-                %s,
-                %s
-            );"""
-            ).strip("\n")
-            with pg_conn.cursor() as _cur:
-                for vote in votes:
-                    try:
+        }
+        logger.debug(f"{all_chain_nums=}")
+        logger.debug(f"{max_block_heights=}")
+        for chain_num in all_chain_nums:
+            if chain_num not in max_block_heights.keys():
+                max_block_heights[chain_num] = 0
+        logger.debug(f"{max_block_heights=}")
+        for chain_num, max_block_height in max_block_heights.items():
+            logger.debug(f"{chain_num=} {max_block_height=}")
+            for event in new_events_to_process(
+                cur, "votes", chain_num, max_block_height
+            ):
+                (
+                    type,
+                    block_height,
+                    tx_idx,
+                    msg_idx,
+                    _,
+                    _,
+                    chain_num,
+                    timestamp,
+                    tx_hash,
+                ) = event[0]
+                normalize = {}
+                normalize["type"] = type
+                normalize["block_height"] = block_height
+                normalize["tx_idx"] = tx_idx
+                normalize["msg_idx"] = msg_idx
+                normalize["chain_num"] = chain_num
+                normalize["timestamp"] = timestamp
+                normalize["tx_hash"] = tx_hash
+                for entry in event:
+                    (_, _, _, _, key, value, _, _, _) = entry
+                    value = value.strip('"')
+                    normalize[key] = value
+                logger.debug(normalize)
+                votes = fetch_votes_by_proposal(
+                    normalize["block_height"], normalize["proposal_id"]
+                )
+                logger.debug(f"{votes=}")
+                insert_text = textwrap.dedent(
+                    """
+                INSERT INTO votes (
+                    type,
+                    block_height,
+                    tx_idx,
+                    msg_idx,
+                    chain_num,
+                    timestamp,
+                    tx_hash,
+                    proposal_id,
+                    voter,
+                    option,
+                    metadata,
+                    submit_time
+                ) VALUES (
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s
+                ) ON CONFLICT DO NOTHING;"""
+                ).strip("\n")
+                with pg_conn.cursor() as _cur:
+                    for vote in votes:
                         row = (
                             normalize["type"],
                             normalize["block_height"],
@@ -114,11 +141,6 @@ def _index_votes(pg_conn, _client, _chain_num):
                         logger.debug(_cur.statusmessage)
                         pg_conn.commit()
                         logger.info("vote inserted..")
-                    except ForeignKeyViolation as exc:
-                        logger.debug(exc)
-                        pg_conn.rollback()
-                        # since we know all votes for this proposal will fail we exit the loop
-                        break
 
 
 def index_votes():

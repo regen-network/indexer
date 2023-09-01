@@ -148,6 +148,44 @@ def events_to_process(cur, index_table_name):
         yield list(g)
 
 
+def new_events_to_process(cur, index_table_name, chain_num, max_block_height):
+    event_names = TABLE_EVENT_NAMES_MAP[index_table_name]
+    formatted_event_names = [f"'{x}'" for x in event_names]
+    formatted_event_names_set = f"({','.join(formatted_event_names)})"
+    sql = textwrap.dedent(
+        f"""
+    SELECT mea.type,
+           mea.block_height,
+           mea.tx_idx,
+           mea.msg_idx,
+           mea.key,
+           mea.value,
+           mea.chain_num,
+           TRIM(BOTH '"' FROM (tx.data -> 'tx_response' -> 'timestamp')::text) AS timestamp,
+           encode(tx.hash, 'hex') as tx_hash
+    FROM msg_event_attr AS mea
+    NATURAL LEFT JOIN {index_table_name} AS e
+    NATURAL LEFT JOIN tx
+    WHERE mea.type IN {formatted_event_names_set} 
+        AND (e.block_height IS NULL
+             AND e.type IS NULL
+             AND e.tx_idx IS NULL
+             AND e.msg_idx IS NULL)
+        AND mea.chain_num = {chain_num}
+        AND mea.block_height > {max_block_height}
+    ORDER BY block_height ASC,
+             KEY ASC;
+    """
+    )
+    cur.execute(sql)
+
+    # group together results from the query above
+    # the group by done based on the block_height, tx_idx, and msg_idx
+    # this is how key and value are put into their own column
+    for _, g in groupby(cur, lambda x: f"{x[1]}-{x[2]}-{x[3]}"):
+        yield list(g)
+
+
 def is_archive_node():
     # since the indexer is intended to run against archive nodes,
     # assume that by default the node is an archive node.
