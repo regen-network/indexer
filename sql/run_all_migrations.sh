@@ -15,3 +15,4 @@ psql -c "\i V1_8__index_proposal_id.sql" $DATABASE_URL
 psql -c "\i V1_9__all_ecocredit_txes.sql" $DATABASE_URL
 psql -c "\i V1_10__class_issuers.sql" $DATABASE_URL
 psql -c "\i V1_11__class_issuers_indexes.sql" $DATABASE_URL
+psql -c "\i V1_12__votes.sql" $DATABASE_URL

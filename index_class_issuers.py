@@ -2,15 +2,19 @@ import logging
 import os
 import textwrap
 import requests
-from utils import PollingProcess, events_to_process
+from utils import is_archive_node, PollingProcess, events_to_process
 
 logger = logging.getLogger(__name__)
 
 
 def fetch_class_issuers(height, class_id):
+    if is_archive_node():
+        headers = {"x-cosmos-block-height": str(height)}
+    else:
+        headers = None
     resp = requests.get(
         f"{os.environ['REGEN_API']}/regen/ecocredit/v1/classes/{class_id}/issuers",
-        headers={"x-cosmos-block-height": str(height)},
+        headers=headers,
     )
     resp.raise_for_status()
     return resp.json()["issuers"]

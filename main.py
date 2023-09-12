@@ -7,6 +7,7 @@ from index_blocks import index_blocks
 from index_retires import index_retires
 from index_proposals import index_proposals
 from index_class_issuers import index_class_issuers
+from index_votes import index_votes
 
 load_dotenv()
 
@@ -36,3 +37,4 @@ if __name__ == "__main__":
     index_retires()
     index_proposals()
     index_class_issuers()
+    index_votes()
