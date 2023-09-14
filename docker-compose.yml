@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:14
+    container_name: db_container
+    restart: always
+    user: postgres
+    environment:
+      POSTGRES_PASSWORD: password
+    network_mode: host
+    expose:
+      - 5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 1s
+      timeout: 10s
+      retries: 100
+
+  ledger:
+    build:
+      context: .
+      dockerfile: docker/ledger.Dockerfile
+    container_name: ledger_container
+    entrypoint: ["/bin/sh", "-c", "./scripts/ledger_start.sh"]
+    network_mode: host
+    expose:
+      - 1317
+      - 26657
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:26657 || exit 1"]
+      interval: 1s
+      timeout: 10s
+      retries: 100
+
+  indexer:
+    build:
+      context: .
+      dockerfile: docker/indexer.Dockerfile
+    container_name: indexer_container
+    environment:
+      DATABASE_URL: postgres://postgres:password@localhost:5432
+      REGEN_API: http://localhost:1317
+      REGEN_RPC: http://localhost:26657
+    entrypoint: ["/bin/sh", "-c", "./docker/scripts/indexer_start.sh"]
+    network_mode: host
+    depends_on:
+      db:
+        condition: service_healthy
+      ledger:
+        condition: service_healthy
+
+  tester:
+    build:
+      context: .
+      dockerfile: docker/tester.Dockerfile
+    container_name: tester_container
+    entrypoint: ["/bin/sh", "-c", "./scripts/tester_start.sh"]
+    network_mode: host
+    depends_on:
+      db:
+        condition: service_healthy
+      ledger:
+        condition: service_healthy
+      indexer:
+        condition: service_started

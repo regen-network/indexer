@@ -1,0 +1,55 @@
+{
+  "group_members": [
+    {
+      "group_id": "1",
+      "member": {
+        "added_at": "2023-01-01T00:00:00Z",
+        "address": "regen1l2pwmzk96ftmmt5egpjulyqtneygmmzndf7csk",
+        "metadata": "",
+        "weight": "1"
+      }
+    },
+    {
+      "group_id": "1",
+      "member": {
+        "added_at": "2023-01-01T00:00:00Z",
+        "address": "regen14v5z5yyl5unnyu6q3ele8ze9jev6y0m7tx6gct",
+        "metadata": "",
+        "weight": "1"
+      }
+    }
+  ],
+  "group_policies": [
+    {
+      "address": "regen1afk9zr2hn2jsac63h4hm60vl9z3e5u69gndzf7c99cqge3vzwjzs475lmr",
+      "admin": "regen1l2pwmzk96ftmmt5egpjulyqtneygmmzndf7csk",
+      "created_at": "2023-01-01T00:00:00Z",
+      "decision_policy": {
+        "@type": "/cosmos.group.v1.ThresholdDecisionPolicy",
+        "threshold": "1",
+        "windows": {
+          "min_execution_period": "0s",
+          "voting_period": "20s"
+        }
+      },
+      "group_id": "1",
+      "metadata": "",
+      "version": "1"
+    }
+  ],
+  "group_policy_seq": "1",
+  "group_seq": "1",
+  "groups": [
+    {
+      "admin": "regen1l2pwmzk96ftmmt5egpjulyqtneygmmzndf7csk",
+      "created_at": "2023-01-01T00:00:00Z",
+      "id": "1",
+      "metadata": "",
+      "total_weight": "2",
+      "version": "1"
+    }
+  ],
+  "proposal_seq": "0",
+  "proposals": [],
+  "votes": []
+}
