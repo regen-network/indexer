@@ -51,13 +51,13 @@ RUN sed -i "s/minimum-gas-prices = \"\"/minimum-gas-prices = \"0uregen\"/" /root
 # Set cors allow all origins
 RUN sed -i "s/cors_allowed_origins = \[\]/cors_allowed_origins = [\"*\"]/" /root/.regen/config/config.toml
 
-# copy genesis state files
+# Copy genesis state files
 COPY docker/data /home/ledger/data
 
-# add authz state to genesis
+# Add authz state to genesis
 RUN jq '.app_state.group |= . + input' /root/.regen/config/genesis.json /home/ledger/data/ledger_group.json > genesis-tmp.json
 
-# overwrite genesis file with updated genesis file
+# Overwrite genesis file with updated genesis file
 RUN mv -f genesis-tmp.json /root/.regen/config/genesis.json
 
 # Copy regen start script
