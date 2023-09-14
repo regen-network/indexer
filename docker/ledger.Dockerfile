@@ -54,7 +54,7 @@ RUN sed -i "s/cors_allowed_origins = \[\]/cors_allowed_origins = [\"*\"]/" /root
 # Copy genesis state files
 COPY docker/data /home/ledger/data
 
-# Add authz state to genesis
+# Add group state to genesis
 RUN jq '.app_state.group |= . + input' /root/.regen/config/genesis.json /home/ledger/data/ledger_group.json > genesis-tmp.json
 
 # Overwrite genesis file with updated genesis file
