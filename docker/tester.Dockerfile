@@ -4,7 +4,7 @@ FROM golang:1.19
 RUN apt-get update
 RUN apt-get install jq libpq-dev postgresql-client -y
 
-# Set version and chain
+# Set ledger version
 ENV GIT_CHECKOUT='v5.1.2'
 
 # Set database url
