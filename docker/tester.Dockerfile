@@ -6,7 +6,6 @@ RUN apt-get install jq libpq-dev postgresql-client -y
 
 # Set version and chain
 ENV GIT_CHECKOUT='v5.1.2'
-ENV REGEN_CHAIN_ID='regen-local'
 
 # Set database url
 ENV DATABASE_URL='postgres://postgres:password@localhost:5432/postgres'
@@ -32,7 +31,7 @@ RUN git checkout $GIT_CHECKOUT
 RUN make install
 
 # Set configuration
-RUN regen config chain-id $REGEN_CHAIN_ID
+RUN regen config chain-id regen-local
 RUN regen config keyring-backend test
 
 # Add accounts

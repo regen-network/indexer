@@ -6,7 +6,6 @@ RUN apt-get install jq -y
 
 # Set version and chain
 ENV GIT_CHECKOUT='v5.1.2'
-ENV REGEN_CHAIN_ID='regen-local'
 
 # Clone regen ledger
 RUN git clone https://github.com/regen-network/regen-ledger/ /home/ledger
@@ -21,10 +20,10 @@ RUN git checkout $GIT_CHECKOUT
 RUN make install
 
 # Setup moniker, chain, homedir
-RUN regen --chain-id $REGEN_CHAIN_ID init validator
+RUN regen --chain-id regen-local init validator
 
 # Set configuration
-RUN regen config chain-id $REGEN_CHAIN_ID
+RUN regen config chain-id regen-local
 RUN regen config keyring-backend test
 
 # Update stake to uregen

@@ -14,8 +14,5 @@ if [ ! -e $INDEXER_INITIALIZED ]; then
   /home/indexer/docker/scripts/indexer_init.sh
 fi
 
-# wait for ledger to start
-sleep 10 # TODO: improve error handling if node unavailable
-
 # start indexer
 python main.py
