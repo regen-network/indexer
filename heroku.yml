@@ -2,7 +2,7 @@ build:
   docker:
     index-regen: heroku.Dockerfile
 run:
-  index-regen: poetry run python main.py
+  index-regen: poetry install && poetry run python main.py
 release:
   image: index-regen
   command:
