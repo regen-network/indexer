@@ -8,7 +8,7 @@ RUN apt-get install jq libpq-dev postgresql-client -y
 ENV GIT_CHECKOUT='v5.1.2'
 
 # Set database url
-ENV DATABASE_URL='postgres://postgres:password@localhost:5432/postgres'
+ENV DATABASE_URL='postgres://postgres:password@localhost:5432/indexer'
 
 # Set test addresses
 ENV TEST_USER_ADDRESS_1=regen1l2pwmzk96ftmmt5egpjulyqtneygmmzndf7csk
