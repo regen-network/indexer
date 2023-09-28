@@ -4,7 +4,7 @@ psql "$DATABASE_URL" -c "CREATE DATABASE indexer"
 psql "$DATABASE_URL" -c "CREATE DATABASE indexer_shadow"
 
 # run migrations
-npm run db-init
+yarnpkg run db-init
 
 # workaround for indexer starting with new chain
 psql "$DATABASE_URL" -c "INSERT INTO chain (
