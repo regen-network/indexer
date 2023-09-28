@@ -11,5 +11,5 @@ WORKDIR /home/indexer
 COPY . .
 
 # Install indexer
-RUN poetry install
+RUN pip3 install -r requirements.txt 
 RUN yarnpkg install
