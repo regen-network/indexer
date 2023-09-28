@@ -1,3 +1,5 @@
+migrations/current.sql
+
 *.sw[pno]
 .envrc
 

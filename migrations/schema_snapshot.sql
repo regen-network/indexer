@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.11 (Ubuntu 13.11-1.pgdg20.04+1)
+-- Dumped from database version 14.9 (Homebrew)
 -- Dumped by pg_dump version 14.9 (Homebrew)
 
 SET statement_timeout = 0;
@@ -10,11 +10,17 @@ SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', 'public', false);
+SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Name: graphile_migrate; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA graphile_migrate;
 
 
 --
@@ -77,6 +83,29 @@ CREATE FUNCTION public.all_ecocredit_txes() RETURNS SETOF public.tx
       and me.type like 'regen.ecocredit.%'
     order by tx.block_height desc
 $$;
+
+
+--
+-- Name: current; Type: TABLE; Schema: graphile_migrate; Owner: -
+--
+
+CREATE TABLE graphile_migrate.current (
+    filename text DEFAULT 'current.sql'::text NOT NULL,
+    content text NOT NULL,
+    date timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: migrations; Type: TABLE; Schema: graphile_migrate; Owner: -
+--
+
+CREATE TABLE graphile_migrate.migrations (
+    hash text NOT NULL,
+    previous_hash text,
+    filename text NOT NULL,
+    date timestamp with time zone DEFAULT now() NOT NULL
+);
 
 
 --
@@ -387,6 +416,22 @@ ALTER TABLE ONLY public.chain ALTER COLUMN num SET DEFAULT nextval('public.chain
 
 
 --
+-- Name: current current_pkey; Type: CONSTRAINT; Schema: graphile_migrate; Owner: -
+--
+
+ALTER TABLE ONLY graphile_migrate.current
+    ADD CONSTRAINT current_pkey PRIMARY KEY (filename);
+
+
+--
+-- Name: migrations migrations_pkey; Type: CONSTRAINT; Schema: graphile_migrate; Owner: -
+--
+
+ALTER TABLE ONLY graphile_migrate.migrations
+    ADD CONSTRAINT migrations_pkey PRIMARY KEY (hash);
+
+
+--
 -- Name: block block_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -583,6 +628,14 @@ CREATE INDEX votes_proposal_id_chain_num_idx ON public.votes USING btree (propos
 
 
 --
+-- Name: migrations migrations_previous_hash_fkey; Type: FK CONSTRAINT; Schema: graphile_migrate; Owner: -
+--
+
+ALTER TABLE ONLY graphile_migrate.migrations
+    ADD CONSTRAINT migrations_previous_hash_fkey FOREIGN KEY (previous_hash) REFERENCES graphile_migrate.migrations(hash);
+
+
+--
 -- Name: block block_chain_num_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -658,7 +711,6 @@ ALTER TABLE ONLY public.votes
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
 --
 
-REVOKE ALL ON SCHEMA public FROM postgres;
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 
 
