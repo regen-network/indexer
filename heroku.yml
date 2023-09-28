@@ -1,0 +1,9 @@
+build:
+  docker:
+    index-regen: heroku.Dockerfile
+run:
+  index-regen: poetry run python main.py
+release:
+  image: index-regen
+  command:
+    - yarnpkg migrate
