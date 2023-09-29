@@ -11,5 +11,7 @@ WORKDIR /home/indexer
 COPY . .
 
 # Install indexer
+RUN poetry install
+RUN poetry export --without-hashes --format=requirements.txt > requirements.txt
 RUN pip3 install -r requirements.txt 
 RUN yarnpkg install
