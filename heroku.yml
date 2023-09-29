@@ -6,4 +6,4 @@ run:
 release:
   image: index-regen
   command:
-    - yarnpkg migrate
+    - PGSSLMODE=no-verify yarnpkg migrate
