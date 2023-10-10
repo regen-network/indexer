@@ -37,7 +37,9 @@ services:
       dockerfile: docker/indexer.Dockerfile
     container_name: indexer_container
     environment:
-      DATABASE_URL: postgres://postgres:password@localhost:5432
+      DATABASE_URL: postgres://postgres:password@localhost:5432/indexer
+      SHADOW_DATABASE_URL: postgres://postgres:password@localhost:5432/indexer_shadow
+      ROOT_DATABASE_URL: postgres://postgres:password@localhost:5432/postgres
       REGEN_API: http://localhost:1317
       REGEN_RPC: http://localhost:26657
     entrypoint: ["/bin/sh", "-c", "./docker/scripts/indexer_start.sh"]

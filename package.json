@@ -1,0 +1,12 @@
+{
+  "name": "indexer",
+  "version": "1.0.0",
+  "scripts": {
+    "migrate": "graphile-migrate migrate",
+    "db-init": "graphile-migrate reset --erase"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "graphile-migrate": "^1.4.1"
+  }
+}
