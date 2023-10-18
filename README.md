@@ -10,7 +10,7 @@ The [Regen Server](https://github.com/regen-network/regen-server/) provides a Gr
 
 https://api.regen.network/indexer/v1/graphiql
 
-Both the groups-ui and the regen-marketplace use this API to access the data.
+Both the Regen Groups UI and the Regen Marketplace use this API to access the data.
 
 ## Dependencies
 
