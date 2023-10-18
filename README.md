@@ -6,7 +6,7 @@ This database is currently being used for several purposes in relation to the Re
 
 ## GraphQL API
 
-The regen-server provides a GraphQL API for accessing the indexer database:
+The [Regen Server](https://github.com/regen-network/regen-server/) provides a GraphQL API for accessing the indexer database:
 
 https://api.regen.network/indexer/v1/graphiql
 
