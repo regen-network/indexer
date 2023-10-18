@@ -48,7 +48,7 @@ The scripts that index regen-specific application data are:
 
 ## Running the main script
 
-After successfully running a local testnet version of regen-ledger and preparing a database you can run the scripts with:
+After successfully running a local testnet version of Regen Ledger and preparing a database you can run the scripts with:
 
 ```
 $ poetry install
