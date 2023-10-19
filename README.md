@@ -2,7 +2,7 @@
 
 This project indexes data from the [Regen Ledger](https://github.com/regen-network/regen-ledger/) and stores it in a postgresql database.
 It is built as single python script that spawns independent processes for indexing application specific data.
-This database is currently being used for several purposes in relation to the Regen Marketplace and the Regen Groups UI.
+This database is currently being used for several purposes in relation to [the Regen Marketplace](https://github.com/regen-network/regen-web) and [the Regen Groups UI](https://github.com/regen-network/groups-ui).
 
 ## GraphQL API
 
