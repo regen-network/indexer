@@ -17,7 +17,7 @@ Both the Regen Groups UI and the Regen Marketplace use this API to access the da
 In order to run this project locally you will need the following:
 
 1. a [local testnet](https://docs.regen.network/ledger/get-started/local-testnet.html) version of regen-ledger with REST API and RPC enabled
-2. a postgresql database running
+2. a postgresql database running, either locally or through [docker](#local-development-with-docker)
 3. a working python3 installation
 4. the [poetry package manager](https://python-poetry.org/docs/#installation) for python installed
 
