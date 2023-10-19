@@ -64,6 +64,16 @@ See [migrations/README.md](migrations/README.md).
 This application is deployed in a pipeline in heroku.
 There is a staging environment in addition to the production environment.
 
+## Local development with docker
+
+You can make use of docker to bring up the various components required for development.
+See the `docker-compose.yml` for information on what the components are.
+The following command will bring up the system:
+
+```
+docker-compose up
+```
+
 ## E2E Testing
 
 Currently we have a set of e2e tests written using the Regen CLI and shell scripts.
