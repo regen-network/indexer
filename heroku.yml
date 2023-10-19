@@ -1,9 +1,9 @@
 build:
   docker:
-    index-regen: heroku.Dockerfile
+    indexer: heroku.Dockerfile
 run:
-  index-regen: python main.py
+  indexer: python main.py
 release:
-  image: index-regen
+  image: indexer
   command:
     - PGSSLMODE=no-verify yarnpkg migrate
