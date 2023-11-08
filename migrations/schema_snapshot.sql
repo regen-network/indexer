@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.9 (Homebrew)
--- Dumped by pg_dump version 14.9 (Homebrew)
+-- Dumped from database version 14.9 (Debian 14.9-1.pgdg110+1)
+-- Dumped by pg_dump version 15.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -21,6 +21,13 @@ SET row_security = off;
 --
 
 CREATE SCHEMA graphile_migrate;
+
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
 
 
 --
@@ -77,10 +84,10 @@ CREATE FUNCTION public.all_ecocredit_txes() RETURNS SETOF public.tx
     AS $$
     select tx.*
     from tx
-    natural join msg_event as me
+    inner join msg using (chain_num, block_height, tx_idx)
     where
-      data ->'tx_response'->'code' = '0'
-      and me.type like 'regen.ecocredit.%'
+      tx.data ->'tx_response'->'code' = '0' and
+      msg.data->>'@type' like '/regen.ecocredit.%'
     order by tx.block_height desc
 $$;
 
@@ -572,6 +579,13 @@ CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING b
 
 
 --
+-- Name: msg_data_type_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX msg_data_type_idx ON public.msg USING btree (((data -> '@type'::text)));
+
+
+--
 -- Name: msg_event_attr_type_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -711,7 +725,8 @@ ALTER TABLE ONLY public.votes
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
 --
 
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM postgres;
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 
 
 --
