@@ -45,6 +45,20 @@ COMMENT ON EXTENSION pg_stat_statements IS 'track planning and execution statist
 
 
 --
+-- Name: pg_trgm; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pg_trgm; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
+
+
+--
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -579,10 +593,10 @@ CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING b
 
 
 --
--- Name: msg_data_type_idx; Type: INDEX; Schema: public; Owner: -
+-- Name: msg_data_type_gin_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX msg_data_type_idx ON public.msg USING btree (((data -> '@type'::text)));
+CREATE INDEX msg_data_type_gin_idx ON public.msg USING gin (((data ->> '@type'::text)) public.gin_trgm_ops);
 
 
 --
