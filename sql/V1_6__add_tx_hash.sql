@@ -1,2 +1,0 @@
-ALTER TABLE retirements
-ADD COLUMN IF NOT EXISTS tx_hash TEXT NOT NULL;
