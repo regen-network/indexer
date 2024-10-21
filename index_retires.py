@@ -55,6 +55,8 @@ def _index_retires(pg_conn, _client, _chain_num):
                         normalize["jurisdiction"] = value
                     elif key == "owner":
                         normalize["owner"] = value
+                    elif key == "reason":
+                        normalize["reason"] = value
             with pg_conn.cursor() as _cur:
                 _cur.execute(
                     """SELECT TRIM(BOTH '"' FROM (tx.data -> 'tx' -> 'body' -> 'memo')::text) AS memo FROM tx WHERE block_height=%s AND chain_num=%s AND tx_idx=%s""",
