@@ -40,6 +40,7 @@ def _index_retires(pg_conn, _client, _chain_num):
                         normalize["amount"] = normalize["amount"] + float(value)
                     elif key == "batch_denom":
                         normalize["batch_denoms"].append(value)
+                        normalize["batch_denom"] = value # TODO remove once app fully migrated
                     elif key == "location":
                         normalize["jurisdiction"] = value
                     elif key == "retirer":
@@ -49,6 +50,7 @@ def _index_retires(pg_conn, _client, _chain_num):
                         normalize["amount"] = normalize["amount"] + float(value)
                     elif key == "batch_denom":
                         normalize["batch_denoms"].append(value)
+                        normalize["batch_denom"] = value # TODO remove once app fully migrated
                     elif key == "jurisdiction":
                         normalize["jurisdiction"] = value
                     elif key == "owner":
