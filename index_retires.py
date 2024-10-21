@@ -29,20 +29,30 @@ def _index_retires(pg_conn, _client, _chain_num):
             normalize["chain_num"] = chain_num
             normalize["timestamp"] = timestamp
             normalize["tx_hash"] = tx_hash
+            normalize["batch_denoms"] = []
+            normalize["amount"] = 0
+
             for entry in event:
                 (_, _, _, _, key, value, _, _, _) = entry
                 value = value.strip('"')
                 if "v1alpha1.EventRetire" in entry[0]:
                     if key == "amount":
-                        normalize["amount"] = value
+                        normalize["amount"] = normalize["amount"] + float(value)
                     elif key == "batch_denom":
-                        normalize["batch_denom"] = value
+                        normalize["batch_denoms"].append(value)
                     elif key == "location":
                         normalize["jurisdiction"] = value
                     elif key == "retirer":
                         normalize["owner"] = value
                 elif "v1.EventRetire" in entry[0]:
-                    normalize[key] = value
+                    if key == "amount":
+                        normalize["amount"] = normalize["amount"] + float(value)
+                    elif key == "batch_denom":
+                        normalize["batch_denoms"].append(value)
+                    elif key == "jurisdiction":
+                        normalize["jurisdiction"] = value
+                    elif key == "owner":
+                        normalize["owner"] = value
             with pg_conn.cursor() as _cur:
                 _cur.execute(
                     """SELECT TRIM(BOTH '"' FROM (tx.data -> 'tx' -> 'body' -> 'memo')::text) AS memo FROM tx WHERE block_height=%s AND chain_num=%s AND tx_idx=%s""",
@@ -54,7 +64,7 @@ def _index_retires(pg_conn, _client, _chain_num):
                 retirement = (
                     normalize["type"],
                     normalize["amount"],
-                    normalize["batch_denom"],
+                    normalize["batch_denoms"],
                     normalize["jurisdiction"],
                     normalize["owner"],
                     normalize.get("reason", ""),
@@ -66,7 +76,7 @@ def _index_retires(pg_conn, _client, _chain_num):
                     normalize["tx_hash"],
                 )
                 _cur.execute(
-                    "INSERT INTO retirements (type, amount, batch_denom, jurisdiction, owner, reason, block_height, chain_num, tx_idx, msg_idx, timestamp, tx_hash) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    "INSERT INTO retirements (type, amount, batch_denoms, jurisdiction, owner, reason, block_height, chain_num, tx_idx, msg_idx, timestamp, tx_hash) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     retirement,
                 )
                 pg_conn.commit()
