@@ -66,6 +66,7 @@ def _index_retires(pg_conn, _client, _chain_num):
                 retirement = (
                     normalize["type"],
                     normalize["amount"],
+                    normalize["batch_denom"], # TODO remove once app fully migrated
                     normalize["batch_denoms"],
                     normalize["jurisdiction"],
                     normalize["owner"],
@@ -78,7 +79,7 @@ def _index_retires(pg_conn, _client, _chain_num):
                     normalize["tx_hash"],
                 )
                 _cur.execute(
-                    "INSERT INTO retirements (type, amount, batch_denoms, jurisdiction, owner, reason, block_height, chain_num, tx_idx, msg_idx, timestamp, tx_hash) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    "INSERT INTO retirements (type, amount, batch_denom, batch_denoms, jurisdiction, owner, reason, block_height, chain_num, tx_idx, msg_idx, timestamp, tx_hash) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     retirement,
                 )
                 pg_conn.commit()
