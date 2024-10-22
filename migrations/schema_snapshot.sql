@@ -3,11 +3,12 @@
 --
 
 -- Dumped from database version 14.9 (Debian 14.9-1.pgdg110+1)
--- Dumped by pg_dump version 15.4
+-- Dumped by pg_dump version 17.0
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -405,7 +406,8 @@ CREATE TABLE public.retirements (
     chain_num smallint NOT NULL,
     tx_idx smallint NOT NULL,
     msg_idx smallint NOT NULL,
-    tx_hash text NOT NULL
+    tx_hash text NOT NULL,
+    batch_denoms text[] DEFAULT ARRAY[]::text[] NOT NULL
 );
 
 
@@ -530,6 +532,14 @@ ALTER TABLE ONLY public.proposals
 
 ALTER TABLE ONLY public.retirements
     ADD CONSTRAINT retirements_pkey PRIMARY KEY (chain_num, block_height, tx_idx, msg_idx);
+
+
+--
+-- Name: retirements retirements_tx_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.retirements
+    ADD CONSTRAINT retirements_tx_hash_key UNIQUE (tx_hash);
 
 
 --

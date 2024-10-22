@@ -12,14 +12,14 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
       - name: docker-test
-        run: docker-compose up --abort-on-container-exit --exit-code-from tester
+        run: docker compose up --abort-on-container-exit --exit-code-from tester
       - name: docker-logs
-        run: docker-compose ps
+        run: docker compose ps
       - name: docker-logs-db
-        run: docker-compose logs db
+        run: docker compose logs db
       - name: docker-logs-ledger
-        run: docker-compose logs ledger
+        run: docker compose logs ledger
       - name: docker-logs-indexer
-        run: docker-compose logs indexer
+        run: docker compose logs indexer
       - name: docker-logs-tester
-        run: docker-compose logs tester
+        run: docker compose logs tester
