@@ -535,6 +535,14 @@ ALTER TABLE ONLY public.retirements
 
 
 --
+-- Name: retirements retirements_tx_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.retirements
+    ADD CONSTRAINT retirements_tx_hash_key UNIQUE (tx_hash);
+
+
+--
 -- Name: tx tx_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
