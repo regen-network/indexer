@@ -16,11 +16,11 @@ $ docker-compose up --build postgres
 
 Then, you must initialize the database:
 
-```
-$ export DATABASE_URL="postgres://postgres:postgres@localhost:5432/indexer"
-$ export SHADOW_DATABASE_URL="postgres://postgres:postgres@localhost:5432/indexer_shadow"
-$ export ROOT_DATABASE_URL="postgres://postgres:postgres@localhost:5432/postgres"
-$ yarn run graphile-migrate reset --erase
+```sh
+export DATABASE_URL="postgres://postgres:postgres@localhost:5432/indexer"
+export SHADOW_DATABASE_URL="postgres://postgres:postgres@localhost:5432/indexer_shadow"
+export ROOT_DATABASE_URL="postgres://postgres:postgres@localhost:5432/postgres"
+yarn run graphile-migrate reset --erase
 ```
 
 Now, we set up a watch process that will monitor `migrations/current.sql` for your changes as well as apply them to your local database:
