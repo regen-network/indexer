@@ -364,6 +364,29 @@ CREATE TABLE public.msg_event (
 
 
 --
+-- Name: orders; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.orders (
+    "timestamp" timestamp with time zone,
+    type text NOT NULL,
+    credits_amount text NOT NULL,
+    project_id text NOT NULL,
+    buyer_address text NOT NULL,
+    total_price text NOT NULL,
+    ask_denom text NOT NULL,
+    retired_credits boolean NOT NULL,
+    retirement_reason text,
+    retirement_jurisdiction text,
+    block_height bigint NOT NULL,
+    chain_num smallint NOT NULL,
+    tx_idx smallint NOT NULL,
+    msg_idx smallint NOT NULL,
+    tx_hash text NOT NULL
+);
+
+
+--
 -- Name: proposals; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -519,6 +542,14 @@ ALTER TABLE ONLY public.msg
 
 
 --
+-- Name: orders orders_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.orders
+    ADD CONSTRAINT orders_pkey PRIMARY KEY (chain_num, block_height, tx_idx, msg_idx);
+
+
+--
 -- Name: proposals proposals_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -628,6 +659,13 @@ CREATE INDEX msg_event_type_idx ON public.msg_event USING btree (type);
 --
 
 CREATE INDEX msg_expr_idx ON public.msg USING gin (((data -> '@type'::text)));
+
+
+--
+-- Name: orders_buyer_address_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX orders_buyer_address_idx ON public.orders USING btree (buyer_address);
 
 
 --

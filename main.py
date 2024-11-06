@@ -8,6 +8,7 @@ from index_retires import index_retires
 from index_proposals import index_proposals
 from index_class_issuers import index_class_issuers
 from index_votes import index_votes
+from index_orders import index_orders
 
 load_dotenv()
 
@@ -34,6 +35,7 @@ if SENTRY_DSN:
 
 if __name__ == "__main__":
     index_blocks()
+    index_orders()
     index_retires()
     index_proposals()
     index_class_issuers()
