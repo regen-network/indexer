@@ -1,7 +1,6 @@
 import logging
 import os
 import textwrap
-from psycopg2.extras import Json
 import requests
 from utils import PollingProcess, events_to_process
 from collections import defaultdict
@@ -28,15 +27,14 @@ def fetch_project_id(batch_denom):
 
 def _index_orders(pg_conn, _client, _chain_num):
     with pg_conn.cursor() as cur:
-        # Dictionary to store events grouped by project_id
         for event in events_to_process(
             cur,
             "orders",
         ):
+            # Dictionary to store events grouped by project_id and ask_denom
             events_by_project_and_denom = defaultdict(lambda: defaultdict(list))
             (type, block_height, tx_idx, msg_idx, _, _, chain_num, timestamp, tx_hash) = event[0]
-            logger.info("event")
-            logger.info(event)
+
             # We need to get the corresponding msg.data
             # because EventBuyDirect only stores sell order id currently
             sql = textwrap.dedent(
@@ -71,8 +69,6 @@ def _index_orders(pg_conn, _client, _chain_num):
                 # We group by project_id and ask_denom so we insert a new row in orders table by (project_id, ask_denom)
                 events_by_project_and_denom[project_id][ask_denom].append(order)
             
-            logger.info("events_by_project_and_denom")
-            logger.info(events_by_project_and_denom)
             for project_id, denoms in events_by_project_and_denom.items():
                 for ask_denom, orders in denoms.items():
                     normalize["credits_amount"] = 0
