@@ -546,7 +546,7 @@ ALTER TABLE ONLY public.msg
 --
 
 ALTER TABLE ONLY public.orders
-    ADD CONSTRAINT orders_pkey PRIMARY KEY (chain_num, block_height, tx_idx, msg_idx);
+    ADD CONSTRAINT orders_pkey PRIMARY KEY (chain_num, block_height, tx_idx, msg_idx, project_id, ask_denom);
 
 
 --

@@ -1,5 +1,5 @@
 --! Previous: sha1:8aa6f840171d1c0076e70fbee8dd9b56f794a03d
---! Hash: sha1:b0be1153261a470d83023f509af01421f190ea79
+--! Hash: sha1:fc876ad23b772a75c10056c5b7165585c454983d
 
 DROP TABLE IF EXISTS orders;
 
@@ -19,7 +19,7 @@ CREATE TABLE orders (
   tx_idx smallint NOT NULL,
   msg_idx smallint NOT NULL,
   tx_hash text NOT NULL,
-  PRIMARY KEY (chain_num, block_height, tx_idx, msg_idx)
+  PRIMARY KEY (chain_num, block_height, tx_idx, msg_idx, project_id, ask_denom)
 );
 
 DROP INDEX IF EXISTS orders_buyer_address_idx;
