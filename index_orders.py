@@ -2,7 +2,7 @@ import logging
 import os
 import textwrap
 import requests
-from utils import PollingProcess, events_to_process
+from utils import PollingProcess, events_to_process, new_events_to_process
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)
@@ -27,9 +27,11 @@ def fetch_project_id(batch_denom):
 
 def _index_orders(pg_conn, _client, _chain_num):
     with pg_conn.cursor() as cur:
-        for event in events_to_process(
+        for event in new_events_to_process(
             cur,
             "orders",
+            _chain_num,
+            18054990
         ):
             # Dictionary to store events grouped by project_id and ask_denom
             events_by_project_and_denom = defaultdict(lambda: defaultdict(list))
