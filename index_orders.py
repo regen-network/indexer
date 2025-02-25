@@ -58,6 +58,12 @@ def _index_orders(pg_conn, _client, _chain_num):
             normalize["tx_hash"] = tx_hash
             normalize["buyer_address"] = data["buyer"]
 
+            _cur.execute(
+                """SELECT TRIM(BOTH '"' FROM (tx.data -> 'tx' -> 'body' -> 'memo')::text) AS memo FROM tx WHERE block_height=%s AND chain_num=%s AND tx_idx=%s""",
+                (block_height, chain_num, tx_idx),
+            )
+            (memo,) = _cur.fetchone()
+
             for order in data["orders"]:
                 # If all credits have been purchased in the sell order, then it's pruned from state,
                 # so we need to retrieve the sell order info at height - 1 to get the corresponding project_id
@@ -67,6 +73,8 @@ def _index_orders(pg_conn, _client, _chain_num):
                 project_id = fetch_project_id(sell_order["batch_denom"])
                 ask_denom = sell_order["ask_denom"]
                 # We group by project_id and ask_denom so we insert a new row in orders table by (project_id, ask_denom)
+                if not order.get("retirement_reason") and memo:
+                    order["retirement_reason"] = memo
                 events_by_project_and_denom[project_id][ask_denom].append(order)
             
             for project_id, denoms in events_by_project_and_denom.items():
@@ -92,7 +100,7 @@ def _index_orders(pg_conn, _client, _chain_num):
                         normalize["total_price"],
                         normalize["ask_denom"],
                         normalize["retired_credits"],
-                        order["retirement_reason"],
+                        order.get("retirement_reason", ""),
                         order["retirement_jurisdiction"],
                         project_id,
                     )
