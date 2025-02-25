@@ -37,6 +37,6 @@ if __name__ == "__main__":
     index_blocks()
     index_orders()
     index_retires()
-    index_proposals()
+    # index_proposals()
     index_class_issuers()
     index_votes()
