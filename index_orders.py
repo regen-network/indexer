@@ -58,11 +58,11 @@ def _index_orders(pg_conn, _client, _chain_num):
             normalize["tx_hash"] = tx_hash
             normalize["buyer_address"] = data["buyer"]
 
-            _cur.execute(
+            cur.execute(
                 """SELECT TRIM(BOTH '"' FROM (tx.data -> 'tx' -> 'body' -> 'memo')::text) AS memo FROM tx WHERE block_height=%s AND chain_num=%s AND tx_idx=%s""",
                 (block_height, chain_num, tx_idx),
             )
-            (memo,) = _cur.fetchone()
+            (memo,) = cur.fetchone()
 
             for order in data["orders"]:
                 # If all credits have been purchased in the sell order, then it's pruned from state,
@@ -138,14 +138,13 @@ def _index_orders(pg_conn, _client, _chain_num):
                         %s,
                         %s
                     );""").strip("\n")
-                    with pg_conn.cursor() as _cur:
-                        _cur.execute(
-                            insert_text,
-                            row,
-                        )
-                        logger.debug(_cur.statusmessage)
-                        pg_conn.commit()
-                        logger.info("order inserted...")
+                    cur.execute(
+                        insert_text,
+                        row,
+                    )
+                    logger.debug(cur.statusmessage)
+                    pg_conn.commit()
+                    logger.info("order inserted...")
 
 
 def index_orders():
