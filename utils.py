@@ -136,7 +136,7 @@ def events_to_process(cur, index_table_name):
              AND e.type IS NULL
              AND e.tx_idx IS NULL
              AND e.msg_idx IS NULL)
-    ORDER BY block_height ASC,
+    ORDER BY block_height ASC, tx_idx ASC, msg_idx ASC,
              KEY ASC;
     """
     )
