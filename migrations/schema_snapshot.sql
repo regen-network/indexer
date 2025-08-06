@@ -566,14 +566,6 @@ ALTER TABLE ONLY public.retirements
 
 
 --
--- Name: retirements retirements_tx_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.retirements
-    ADD CONSTRAINT retirements_tx_hash_key UNIQUE (tx_hash);
-
-
---
 -- Name: tx tx_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -687,6 +679,13 @@ CREATE INDEX proposals_proposal_id_idx ON public.proposals USING btree (proposal
 --
 
 CREATE INDEX retirements_owner_idx ON public.retirements USING btree (owner);
+
+
+--
+-- Name: retirements_tx_hash_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX retirements_tx_hash_idx ON public.retirements USING btree (tx_hash);
 
 
 --
