@@ -31,6 +31,7 @@ def _index_retires(pg_conn, _client, _chain_num):
             normalize["tx_hash"] = tx_hash
             normalize["batch_denoms"] = []
             normalize["amount"] = 0
+            normalize["batch_denom"] = None
 
             for entry in event:
                 (_, _, _, _, key, value, _, _, _) = entry
