@@ -36,7 +36,7 @@ RUN printf "music debris chicken erode flag law demise over fall always put boun
 
 # Set up validator
 RUN regen genesis add-genesis-account validator 1000000000uregen --keyring-backend test
-RUN regen genesis gentx validator 1000000uregen
+RUN regen genesis gentx validator 1000000uregen --chain-id regen-local --keyring-backend test
 
 # Set up user acounts
 RUN regen genesis add-genesis-account user1 1000000000uregen --keyring-backend test
