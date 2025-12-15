@@ -5,7 +5,7 @@ RUN apt-get update
 RUN apt-get install jq -y
 
 # Set ledger version
-ENV GIT_CHECKOUT='v5.1.2'
+ENV GIT_CHECKOUT='v7.0.0-rc2'
 
 # Clone regen ledger
 RUN git clone https://github.com/regen-network/regen-ledger/ /home/ledger
