@@ -35,15 +35,15 @@ RUN printf "cool trust waste core unusual report duck amazing fault juice wish c
 RUN printf "music debris chicken erode flag law demise over fall always put bounce ring school dumb ivory spin saddle ostrich better seminar heart beach kingdom\n\n" | regen keys --keyring-backend test add user2 -i
 
 # Set up validator
-RUN regen add-genesis-account validator 1000000000uregen --keyring-backend test
-RUN regen gentx validator 1000000uregen
+RUN regen genesis add-genesis-account validator 1000000000uregen --keyring-backend test
+RUN regen genesis gentx validator 1000000uregen
 
 # Set up user acounts
-RUN regen add-genesis-account user1 1000000000uregen --keyring-backend test
-RUN regen add-genesis-account user2 1000000000uregen --keyring-backend test
+RUN regen genesis add-genesis-account user1 1000000000uregen --keyring-backend test
+RUN regen genesis add-genesis-account user2 1000000000uregen --keyring-backend test
 
 # Prepare genesis file
-RUN regen collect-gentxs
+RUN regen genesis collect-gentxs
 
 # Set minimum gas price
 RUN sed -i "s/minimum-gas-prices = \"\"/minimum-gas-prices = \"0uregen\"/" /root/.regen/config/app.toml
