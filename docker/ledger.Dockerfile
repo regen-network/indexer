@@ -1,8 +1,7 @@
 FROM golang:1.23.8
 
 # Install dependencies
-RUN apt-get update
-RUN apt-get install jq -y
+RUN apt-get update && apt-get install -y jq
 
 # Set ledger version
 ENV GIT_CHECKOUT='v7.0.0-rc2'
@@ -36,9 +35,14 @@ RUN printf "music debris chicken erode flag law demise over fall always put boun
 
 # Set up validator
 RUN regen genesis add-genesis-account validator 1000000000uregen --keyring-backend test
+
+# IMPORTANT FIX: ensure 08-wasm module genesis exists (prevents EOF during gentx validation)
+RUN jq '.app_state["08-wasm"] //= {}' /root/.regen/config/genesis.json > /tmp/genesis.json \
+  && mv /tmp/genesis.json /root/.regen/config/genesis.json
+
 RUN regen genesis gentx validator 1000000uregen --chain-id regen-local --keyring-backend test
 
-# Set up user acounts
+# Set up user accounts
 RUN regen genesis add-genesis-account user1 1000000000uregen --keyring-backend test
 RUN regen genesis add-genesis-account user2 1000000000uregen --keyring-backend test
 
@@ -64,4 +68,4 @@ RUN mv -f genesis-tmp.json /root/.regen/config/genesis.json
 COPY docker/scripts/ledger_start.sh /home/ledger/scripts/
 
 # Make start script executable
-RUN ["chmod", "+x", "/home/ledger/scripts/ledger_start.sh"]
+RUN chmod +x /home/ledger/scripts/ledger_start.sh
