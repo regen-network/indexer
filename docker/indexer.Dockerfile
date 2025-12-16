@@ -11,5 +11,5 @@ WORKDIR /home/indexer
 COPY . .
 
 # Install indexer
-RUN poetry install
+RUN poetry install --no-root
 RUN yarnpkg install 

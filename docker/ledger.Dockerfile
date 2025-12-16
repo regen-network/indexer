@@ -1,11 +1,10 @@
-FROM golang:1.19
+FROM golang:1.23.8
 
 # Install dependencies
-RUN apt-get update
-RUN apt-get install jq -y
+RUN apt-get update && apt-get install -y jq
 
 # Set ledger version
-ENV GIT_CHECKOUT='v5.1.2'
+ENV GIT_CHECKOUT='v7.0.0-rc2'
 
 # Clone regen ledger
 RUN git clone https://github.com/regen-network/regen-ledger/ /home/ledger
@@ -35,15 +34,20 @@ RUN printf "cool trust waste core unusual report duck amazing fault juice wish c
 RUN printf "music debris chicken erode flag law demise over fall always put bounce ring school dumb ivory spin saddle ostrich better seminar heart beach kingdom\n\n" | regen keys --keyring-backend test add user2 -i
 
 # Set up validator
-RUN regen add-genesis-account validator 1000000000uregen --keyring-backend test
-RUN regen gentx validator 1000000uregen
+RUN regen genesis add-genesis-account validator 1000000000uregen --keyring-backend test
 
-# Set up user acounts
-RUN regen add-genesis-account user1 1000000000uregen --keyring-backend test
-RUN regen add-genesis-account user2 1000000000uregen --keyring-backend test
+# IMPORTANT FIX: ensure 08-wasm module genesis exists (prevents EOF during gentx validation)
+RUN jq '.app_state["08-wasm"] //= {}' /root/.regen/config/genesis.json > /tmp/genesis.json \
+  && mv /tmp/genesis.json /root/.regen/config/genesis.json
+
+RUN regen genesis gentx validator 1000000uregen --chain-id regen-local --keyring-backend test
+
+# Set up user accounts
+RUN regen genesis add-genesis-account user1 1000000000uregen --keyring-backend test
+RUN regen genesis add-genesis-account user2 1000000000uregen --keyring-backend test
 
 # Prepare genesis file
-RUN regen collect-gentxs
+RUN regen genesis collect-gentxs
 
 # Set minimum gas price
 RUN sed -i "s/minimum-gas-prices = \"\"/minimum-gas-prices = \"0uregen\"/" /root/.regen/config/app.toml
@@ -64,4 +68,4 @@ RUN mv -f genesis-tmp.json /root/.regen/config/genesis.json
 COPY docker/scripts/ledger_start.sh /home/ledger/scripts/
 
 # Make start script executable
-RUN ["chmod", "+x", "/home/ledger/scripts/ledger_start.sh"]
+RUN chmod +x /home/ledger/scripts/ledger_start.sh

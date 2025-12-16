@@ -42,7 +42,7 @@ def index_block(pg_conn, client: BasicClient, chain_num, height):
                             (chain_num, height, tx_idx, msg_idx, Json(msg)),
                         )
                 if tx["tx"]["tx_response"]["code"] == 0:
-                    for evt in tx["tx"]["tx_response"]["logs"][msg_idx]["events"]:
+                    for evt in tx["tx"]["tx_response"]["events"]:
                         cur.execute(
                             "INSERT INTO msg_event (chain_num, block_height, tx_idx, msg_idx, type) VALUES (%s,%s,%s,%s,%s) "
                             "ON CONFLICT DO NOTHING",
