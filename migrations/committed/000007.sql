@@ -1,7 +1,5 @@
 --! Previous: sha1:073b3c08122620cac334720a2c5adfd485511f88
---! Hash: sha1:74516a9f99b063fa9f29446b72cf800efa963150
-
-BEGIN;
+--! Hash: sha1:a1f8ae0941fd8511e513577d60572126b2525f57
 
 -- 1. Create a Partial Index for IRI lookups
 DO $$ 
@@ -48,11 +46,9 @@ WHERE iri_row.key = 'iri'
        OR iri_row.type LIKE 'regen.data.v%.EventAttest');
 
 -- 3. PostGraphile Smart Comments
--- This tells PostGraphile to treat the combination of these 4 columns as a Primary Key.
+-- This tells PostGraphile to treat the combination of these columns as a Primary Key.
 COMMENT ON VIEW public.unified_data_events IS 
-  E'@primaryKey chain_num,block_height,tx_idx,msg_idx\n@name unifiedDataEvent';
+  E'@primaryKey chain_num,block_height,tx_idx,msg_idx,event_type,iri\n@name unifiedDataEvent';
 
 -- 4. Permissions
 GRANT SELECT ON public.unified_data_events TO public;
-
-COMMIT;

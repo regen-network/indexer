@@ -458,7 +458,7 @@ CREATE VIEW public.unified_data_events AS
 -- Name: VIEW unified_data_events; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON VIEW public.unified_data_events IS '@primaryKey chain_num,block_height,tx_idx,msg_idx
+COMMENT ON VIEW public.unified_data_events IS '@primaryKey chain_num,block_height,tx_idx,msg_idx,event_type,iri
 @name unifiedDataEvent';
 
 
