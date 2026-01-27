@@ -435,6 +435,34 @@ CREATE TABLE public.retirements (
 
 
 --
+-- Name: unified_data_events; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.unified_data_events AS
+ SELECT iri_row.chain_num,
+    iri_row.block_height,
+    iri_row.tx_idx,
+    iri_row.msg_idx,
+    iri_row.type AS event_type,
+    TRIM(BOTH '"'::text FROM iri_row.value) AS iri,
+    TRIM(BOTH '"'::text FROM attestor_row.value) AS attestor,
+    ('0x'::text || encode(t.hash, 'hex'::text)) AS tx_hash,
+    TRIM(BOTH '"'::text FROM (((t.data -> 'tx_response'::text) -> 'timestamp'::text))::text) AS "timestamp"
+   FROM ((public.msg_event_attr iri_row
+     JOIN public.tx t ON (((iri_row.chain_num = t.chain_num) AND (iri_row.block_height = t.block_height) AND (iri_row.tx_idx = t.tx_idx))))
+     LEFT JOIN public.msg_event_attr attestor_row ON (((iri_row.chain_num = attestor_row.chain_num) AND (iri_row.block_height = attestor_row.block_height) AND (iri_row.tx_idx = attestor_row.tx_idx) AND (iri_row.msg_idx = attestor_row.msg_idx) AND (attestor_row.key = 'attestor'::text))))
+  WHERE ((iri_row.key = 'iri'::text) AND ((iri_row.type ~~ 'regen.data.v%.EventAnchor'::text) OR (iri_row.type ~~ 'regen.data.v%.EventAttest'::text)));
+
+
+--
+-- Name: VIEW unified_data_events; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON VIEW public.unified_data_events IS '@primaryKey chain_num,block_height,tx_idx,msg_idx,event_type,iri
+@name unifiedDataEvent';
+
+
+--
 -- Name: votes; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -626,6 +654,13 @@ CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING b
 
 
 --
+-- Name: idx_msg_event_attr_iri_data_v_partial; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_msg_event_attr_iri_data_v_partial ON public.msg_event_attr USING btree (value) WHERE (type ~~ 'regen.data.v%.Event%'::text);
+
+
+--
 -- Name: msg_data_type_gin_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -788,6 +823,13 @@ ALTER TABLE ONLY public.votes
 
 REVOKE ALL ON SCHEMA public FROM postgres;
 REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+
+
+--
+-- Name: TABLE unified_data_events; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.unified_data_events TO PUBLIC;
 
 
 --
