@@ -109,7 +109,10 @@ TABLE_EVENT_NAMES_MAP = {
         "regen.ecocredit.v1.EventUpdateClassIssuers",
     ],
     "votes": ["cosmos.group.v1.EventVote"],
-    "orders": ["regen.ecocredit.marketplace.v1.EventBuyDirect"]
+    "orders": ["regen.ecocredit.marketplace.v1.EventBuyDirect"],
+    "transfers": [
+        "regen.ecocredit.v1.EventTransfer"
+    ]
 }
 
 

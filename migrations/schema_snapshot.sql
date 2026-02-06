@@ -2,13 +2,14 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.9 (Debian 14.9-1.pgdg110+1)
--- Dumped by pg_dump version 17.0
+\restrict WHRr2fwN43euINOJhu9eeLTFMHYWgjrWMWKZojv9efVBZox3ugmf2OycB131i2Y
+
+-- Dumped from database version 14.20 (Debian 14.20-1.pgdg13+1)
+-- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -435,6 +436,26 @@ CREATE TABLE public.retirements (
 
 
 --
+-- Name: transfers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.transfers (
+    type text NOT NULL,
+    tradable_amount text NOT NULL,
+    retired_amount text NOT NULL,
+    batch_denom text NOT NULL,
+    sender text NOT NULL,
+    recipient text NOT NULL,
+    "timestamp" timestamp with time zone,
+    block_height bigint NOT NULL,
+    chain_num smallint NOT NULL,
+    tx_idx smallint NOT NULL,
+    msg_idx smallint NOT NULL,
+    tx_hash text NOT NULL
+);
+
+
+--
 -- Name: unified_data_events; Type: VIEW; Schema: public; Owner: -
 --
 
@@ -594,6 +615,14 @@ ALTER TABLE ONLY public.retirements
 
 
 --
+-- Name: transfers transfers_chain_num_block_height_tx_idx_msg_idx_batch_denom_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transfers
+    ADD CONSTRAINT transfers_chain_num_block_height_tx_idx_msg_idx_batch_denom_key UNIQUE (chain_num, block_height, tx_idx, msg_idx, batch_denom, sender, recipient);
+
+
+--
 -- Name: tx tx_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -724,6 +753,34 @@ CREATE INDEX retirements_tx_hash_idx ON public.retirements USING btree (tx_hash)
 
 
 --
+-- Name: transfers_batch_denom_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX transfers_batch_denom_idx ON public.transfers USING btree (batch_denom);
+
+
+--
+-- Name: transfers_recipient_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX transfers_recipient_idx ON public.transfers USING btree (recipient);
+
+
+--
+-- Name: transfers_sender_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX transfers_sender_idx ON public.transfers USING btree (sender);
+
+
+--
+-- Name: transfers_tx_hash_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX transfers_tx_hash_idx ON public.transfers USING btree (tx_hash);
+
+
+--
 -- Name: tx_data_tx_response_code_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -835,4 +892,6 @@ GRANT SELECT ON TABLE public.unified_data_events TO PUBLIC;
 --
 -- PostgreSQL database dump complete
 --
+
+\unrestrict WHRr2fwN43euINOJhu9eeLTFMHYWgjrWMWKZojv9efVBZox3ugmf2OycB131i2Y
 

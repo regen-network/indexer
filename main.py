@@ -9,6 +9,7 @@ from index_proposals import index_proposals
 from index_class_issuers import index_class_issuers
 from index_votes import index_votes
 from index_orders import index_orders
+from index_transfers import index_transfers
 
 load_dotenv()
 
@@ -40,3 +41,4 @@ if __name__ == "__main__":
     # index_proposals()
     index_class_issuers()
     index_votes()
+    index_transfers()
