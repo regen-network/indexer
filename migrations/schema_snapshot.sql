@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict WHRr2fwN43euINOJhu9eeLTFMHYWgjrWMWKZojv9efVBZox3ugmf2OycB131i2Y
+\restrict PhTVOzGOUslccylujYZHqan8JKv16yjaFpHzpi1lLZAenMXqMlkWjgZZ7kMgzzU
 
 -- Dumped from database version 14.20 (Debian 14.20-1.pgdg13+1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
@@ -436,23 +436,35 @@ CREATE TABLE public.retirements (
 
 
 --
--- Name: transfers; Type: TABLE; Schema: public; Owner: -
+-- Name: transfers; Type: VIEW; Schema: public; Owner: -
 --
 
-CREATE TABLE public.transfers (
-    type text NOT NULL,
-    tradable_amount text NOT NULL,
-    retired_amount text NOT NULL,
-    batch_denom text NOT NULL,
-    sender text NOT NULL,
-    recipient text NOT NULL,
-    "timestamp" timestamp with time zone,
-    block_height bigint NOT NULL,
-    chain_num smallint NOT NULL,
-    tx_idx smallint NOT NULL,
-    msg_idx smallint NOT NULL,
-    tx_hash text NOT NULL
-);
+CREATE VIEW public.transfers AS
+ SELECT 'regen.ecocredit.v1.EventTransfer'::text AS type,
+    (sum(
+        CASE
+            WHEN ((credit.value ->> 'tradable_amount'::text) = ''::text) THEN (0)::numeric
+            ELSE ((credit.value ->> 'tradable_amount'::text))::numeric
+        END))::text AS tradable_amount,
+    (sum(
+        CASE
+            WHEN ((credit.value ->> 'retired_amount'::text) = ''::text) THEN (0)::numeric
+            ELSE ((credit.value ->> 'retired_amount'::text))::numeric
+        END))::text AS retired_amount,
+    (credit.value ->> 'batch_denom'::text) AS batch_denom,
+    (msg.data ->> 'sender'::text) AS sender,
+    (msg.data ->> 'recipient'::text) AS recipient,
+    (TRIM(BOTH '"'::text FROM (((tx.data -> 'tx_response'::text) -> 'timestamp'::text))::text))::timestamp with time zone AS "timestamp",
+    msg.block_height,
+    msg.chain_num,
+    msg.tx_idx,
+    msg.msg_idx,
+    encode(tx.hash, 'hex'::text) AS tx_hash
+   FROM ((public.msg
+     CROSS JOIN LATERAL jsonb_array_elements((msg.data -> 'credits'::text)) credit(value))
+     JOIN public.tx ON (((msg.block_height = tx.block_height) AND (msg.tx_idx = tx.tx_idx) AND (msg.chain_num = tx.chain_num))))
+  WHERE ((msg.data ->> '@type'::text) = '/regen.ecocredit.v1.MsgSend'::text)
+  GROUP BY (credit.value ->> 'batch_denom'::text), (msg.data ->> 'sender'::text), (msg.data ->> 'recipient'::text), ((tx.data -> 'tx_response'::text) -> 'timestamp'::text), msg.block_height, msg.chain_num, msg.tx_idx, msg.msg_idx, tx.hash;
 
 
 --
@@ -615,14 +627,6 @@ ALTER TABLE ONLY public.retirements
 
 
 --
--- Name: transfers transfers_chain_num_block_height_tx_idx_msg_idx_batch_denom_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.transfers
-    ADD CONSTRAINT transfers_chain_num_block_height_tx_idx_msg_idx_batch_denom_key UNIQUE (chain_num, block_height, tx_idx, msg_idx, batch_denom, sender, recipient);
-
-
---
 -- Name: tx tx_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -690,10 +694,31 @@ CREATE INDEX idx_msg_event_attr_iri_data_v_partial ON public.msg_event_attr USIN
 
 
 --
+-- Name: msg_data_recipient_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX msg_data_recipient_idx ON public.msg USING gin (((data -> 'recipient'::text)));
+
+
+--
+-- Name: msg_data_sender_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX msg_data_sender_idx ON public.msg USING gin (((data -> 'sender'::text)));
+
+
+--
 -- Name: msg_data_type_gin_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX msg_data_type_gin_idx ON public.msg USING gin (((data ->> '@type'::text)) public.gin_trgm_ops);
+
+
+--
+-- Name: msg_data_type_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX msg_data_type_idx ON public.msg USING btree (((data ->> '@type'::text)));
 
 
 --
@@ -750,34 +775,6 @@ CREATE INDEX retirements_owner_idx ON public.retirements USING btree (owner);
 --
 
 CREATE INDEX retirements_tx_hash_idx ON public.retirements USING btree (tx_hash);
-
-
---
--- Name: transfers_batch_denom_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX transfers_batch_denom_idx ON public.transfers USING btree (batch_denom);
-
-
---
--- Name: transfers_recipient_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX transfers_recipient_idx ON public.transfers USING btree (recipient);
-
-
---
--- Name: transfers_sender_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX transfers_sender_idx ON public.transfers USING btree (sender);
-
-
---
--- Name: transfers_tx_hash_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX transfers_tx_hash_idx ON public.transfers USING btree (tx_hash);
 
 
 --
@@ -893,5 +890,5 @@ GRANT SELECT ON TABLE public.unified_data_events TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WHRr2fwN43euINOJhu9eeLTFMHYWgjrWMWKZojv9efVBZox3ugmf2OycB131i2Y
+\unrestrict PhTVOzGOUslccylujYZHqan8JKv16yjaFpHzpi1lLZAenMXqMlkWjgZZ7kMgzzU
 

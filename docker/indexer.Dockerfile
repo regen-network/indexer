@@ -12,4 +12,4 @@ COPY . .
 
 # Install indexer
 RUN poetry install --no-root
-RUN yarnpkg install 
+RUN yarnpkg install
