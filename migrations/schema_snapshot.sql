@@ -1,8 +1,8 @@
---
+ --
 -- PostgreSQL database dump
 --
 
-\restrict PhTVOzGOUslccylujYZHqan8JKv16yjaFpHzpi1lLZAenMXqMlkWjgZZ7kMgzzU
+\restrict pHaWchwoAQDYgXS0e6qt12k5712zNIfbGq86fVWeZ7e2cruN9swVkOuXfAOnJ75
 
 -- Dumped from database version 14.20 (Debian 14.20-1.pgdg13+1)
 -- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
@@ -697,14 +697,14 @@ CREATE INDEX idx_msg_event_attr_iri_data_v_partial ON public.msg_event_attr USIN
 -- Name: msg_data_recipient_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX msg_data_recipient_idx ON public.msg USING gin (((data -> 'recipient'::text)));
+CREATE INDEX msg_data_recipient_idx ON public.msg USING btree (((data ->> 'recipient'::text)));
 
 
 --
 -- Name: msg_data_sender_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX msg_data_sender_idx ON public.msg USING gin (((data -> 'sender'::text)));
+CREATE INDEX msg_data_sender_idx ON public.msg USING btree (((data ->> 'sender'::text)));
 
 
 --
@@ -890,5 +890,5 @@ GRANT SELECT ON TABLE public.unified_data_events TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict PhTVOzGOUslccylujYZHqan8JKv16yjaFpHzpi1lLZAenMXqMlkWjgZZ7kMgzzU
+\unrestrict pHaWchwoAQDYgXS0e6qt12k5712zNIfbGq86fVWeZ7e2cruN9swVkOuXfAOnJ75
 
