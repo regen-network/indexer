@@ -1,14 +1,15 @@
---
+ --
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.9 (Debian 14.9-1.pgdg110+1)
--- Dumped by pg_dump version 17.0
+\restrict pHaWchwoAQDYgXS0e6qt12k5712zNIfbGq86fVWeZ7e2cruN9swVkOuXfAOnJ75
+
+-- Dumped from database version 14.20 (Debian 14.20-1.pgdg13+1)
+-- Dumped by pg_dump version 16.11 (Ubuntu 16.11-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -435,6 +436,38 @@ CREATE TABLE public.retirements (
 
 
 --
+-- Name: transfers; Type: VIEW; Schema: public; Owner: -
+--
+
+CREATE VIEW public.transfers AS
+ SELECT 'regen.ecocredit.v1.EventTransfer'::text AS type,
+    (sum(
+        CASE
+            WHEN ((credit.value ->> 'tradable_amount'::text) = ''::text) THEN (0)::numeric
+            ELSE ((credit.value ->> 'tradable_amount'::text))::numeric
+        END))::text AS tradable_amount,
+    (sum(
+        CASE
+            WHEN ((credit.value ->> 'retired_amount'::text) = ''::text) THEN (0)::numeric
+            ELSE ((credit.value ->> 'retired_amount'::text))::numeric
+        END))::text AS retired_amount,
+    (credit.value ->> 'batch_denom'::text) AS batch_denom,
+    (msg.data ->> 'sender'::text) AS sender,
+    (msg.data ->> 'recipient'::text) AS recipient,
+    (TRIM(BOTH '"'::text FROM (((tx.data -> 'tx_response'::text) -> 'timestamp'::text))::text))::timestamp with time zone AS "timestamp",
+    msg.block_height,
+    msg.chain_num,
+    msg.tx_idx,
+    msg.msg_idx,
+    encode(tx.hash, 'hex'::text) AS tx_hash
+   FROM ((public.msg
+     CROSS JOIN LATERAL jsonb_array_elements((msg.data -> 'credits'::text)) credit(value))
+     JOIN public.tx ON (((msg.block_height = tx.block_height) AND (msg.tx_idx = tx.tx_idx) AND (msg.chain_num = tx.chain_num))))
+  WHERE ((msg.data ->> '@type'::text) = '/regen.ecocredit.v1.MsgSend'::text)
+  GROUP BY (credit.value ->> 'batch_denom'::text), (msg.data ->> 'sender'::text), (msg.data ->> 'recipient'::text), ((tx.data -> 'tx_response'::text) -> 'timestamp'::text), msg.block_height, msg.chain_num, msg.tx_idx, msg.msg_idx, tx.hash;
+
+
+--
 -- Name: unified_data_events; Type: VIEW; Schema: public; Owner: -
 --
 
@@ -661,10 +694,31 @@ CREATE INDEX idx_msg_event_attr_iri_data_v_partial ON public.msg_event_attr USIN
 
 
 --
+-- Name: msg_data_recipient_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX msg_data_recipient_idx ON public.msg USING btree (((data ->> 'recipient'::text)));
+
+
+--
+-- Name: msg_data_sender_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX msg_data_sender_idx ON public.msg USING btree (((data ->> 'sender'::text)));
+
+
+--
 -- Name: msg_data_type_gin_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX msg_data_type_gin_idx ON public.msg USING gin (((data ->> '@type'::text)) public.gin_trgm_ops);
+
+
+--
+-- Name: msg_data_type_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX msg_data_type_idx ON public.msg USING btree (((data ->> '@type'::text)));
 
 
 --
@@ -835,4 +889,6 @@ GRANT SELECT ON TABLE public.unified_data_events TO PUBLIC;
 --
 -- PostgreSQL database dump complete
 --
+
+\unrestrict pHaWchwoAQDYgXS0e6qt12k5712zNIfbGq86fVWeZ7e2cruN9swVkOuXfAOnJ75
 
