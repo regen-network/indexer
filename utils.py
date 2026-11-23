@@ -63,14 +63,28 @@ class BasicClient:
         return requests.get(self.rpc + "/tx?hash=" + tx_hash).json()
 
 
+def connect_db():
+    # TCP keepalives make a dropped connection (e.g. after a database failover)
+    # fail quickly instead of hanging until the OS gives up on it.
+    return psycopg2.connect(
+        **parse_dsn(os.environ["DATABASE_URL"]),
+        keepalives=1,
+        keepalives_idle=30,
+        keepalives_interval=10,
+        keepalives_count=5,
+    )
+
+
+# Wait between attempts after an error: 2s, 4s, 8s... up to this many seconds.
+MAX_ERROR_BACKOFF_SECS = 60
+
+
 class PollingProcess(Process):
     def __init__(self, **kwargs):
         self.sleep_secs = int(kwargs.pop("sleep_secs", 0))
         Process.__init__(self, **kwargs)
 
-    def run(self):
-        self.pg_conn = psycopg2.connect(**parse_dsn(os.environ["DATABASE_URL"]))
-        self.client = BasicClient(os.environ["REGEN_RPC"], os.environ["REGEN_API"])
+    def _get_chain_num(self):
         with self.pg_conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO chain (chain_id) VALUES (%s) ON CONFLICT DO NOTHING",
@@ -81,13 +95,53 @@ class PollingProcess(Process):
                 "SELECT num FROM chain WHERE chain_id = %s", (self.client.chain_id,)
             )
             res = cur.fetchone()
-            chain_num = res[0]
+            return res[0]
+
+    def _reset_connection(self):
+        # A closed connection is replaced on the next loop. An open one may be
+        # stuck in a failed transaction, so roll it back, or close it if even
+        # that fails.
+        if self.pg_conn is None or self.pg_conn.closed:
+            return
+        try:
+            self.pg_conn.rollback()
+        except Exception:
+            try:
+                self.pg_conn.close()
+            except Exception:
+                pass
+
+    def run(self):
+        self.pg_conn = None
+        self.client = None
+        chain_num = None
+        consecutive_errors = 0
         while True:
             try:
+                if self.client is None:
+                    self.client = BasicClient(
+                        os.environ["REGEN_RPC"], os.environ["REGEN_API"]
+                    )
+                if self.pg_conn is None or self.pg_conn.closed:
+                    if self.pg_conn is not None:
+                        logger.warning(
+                            "target=%s pid=%s database connection closed, reconnecting",
+                            self._target.__name__,
+                            os.getpid(),
+                        )
+                    self.pg_conn = connect_db()
+                if chain_num is None:
+                    chain_num = self._get_chain_num()
                 self._target(self.pg_conn, self.client, chain_num)
+                # Targets commit their own writes, but a poll that finds
+                # nothing to do leaves its SELECT transaction open. End it so
+                # the connection does not sit "idle in transaction" between polls.
+                self.pg_conn.commit()
+                consecutive_errors = 0
                 if self.sleep_secs:
                     time.sleep(self.sleep_secs)
             except Exception as exc:
+                consecutive_errors += 1
                 capture_exception(exc)
                 logger.error(
                     "target=%s pid=%s exc=%s",
@@ -95,6 +149,10 @@ class PollingProcess(Process):
                     os.getpid(),
                     exc,
                     exc_info=True,
+                )
+                self._reset_connection()
+                time.sleep(
+                    min(MAX_ERROR_BACKOFF_SECS, 2 ** min(consecutive_errors, 6))
                 )
 
 
