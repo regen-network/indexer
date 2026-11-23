@@ -63,16 +63,21 @@ class BasicClient:
         return requests.get(self.rpc + "/tx?hash=" + tx_hash).json()
 
 
+# TCP keepalives make a dropped connection (e.g. after a database failover)
+# fail quickly instead of hanging until the OS gives up on it.
+KEEPALIVE_DEFAULTS = {
+    "keepalives": 1,
+    "keepalives_idle": 30,
+    "keepalives_interval": 10,
+    "keepalives_count": 5,
+}
+
+
 def connect_db():
-    # TCP keepalives make a dropped connection (e.g. after a database failover)
-    # fail quickly instead of hanging until the OS gives up on it.
-    return psycopg2.connect(
-        **parse_dsn(os.environ["DATABASE_URL"]),
-        keepalives=1,
-        keepalives_idle=30,
-        keepalives_interval=10,
-        keepalives_count=5,
-    )
+    # Options set in DATABASE_URL (e.g. ?keepalives_idle=60) take precedence
+    # over the defaults.
+    params = {**KEEPALIVE_DEFAULTS, **parse_dsn(os.environ["DATABASE_URL"])}
+    return psycopg2.connect(**params)
 
 
 # Wait between attempts after an error: 2s, 4s, 8s... up to this many seconds.
